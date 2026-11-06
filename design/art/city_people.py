@@ -46,6 +46,12 @@ EYE_OL = "#3A2A30"
 MOUTH = "#6A3030"
 
 
+def skol(skin):
+    """Outline of skin: a soft warm brown a little darker than the skin (like the mockup's #B97B5C)."""
+    h, L, S = K._hls(skin)
+    return K._hex(h - .01, L * .62, min(1, S * .62))
+
+
 def owner_picture(fn, s=PS, foot=FOOT, shadow=(48, 8), **kw):
     """fn draws in person units, x = 0 in the middle, feet on y = `foot`; it is put in the picture
     at scale s with its feet on GY, over a soft ground shadow."""
@@ -75,14 +81,16 @@ def torso_d(bottom=56, flare=2):
             f"L{n(40 + flare)},{n(bottom)} Q{n(44 + flare)},{n(bottom)} {n(44 + flare)},{n(bottom - 4)} L44,-6 C44,-14 40,-20 34,-20 Z")
 
 
-def arms(col, skin, sko, ol=None, short=False, cuff=None):
-    """Both arms hanging a little away from the body, hands open and empty."""
+def arms(col, skin, sko, ol=None, short=False, cuff=None, pattern=""):
+    """Both arms hanging a little away from the body, hands open and empty (pattern: drawn inside
+    short sleeves)."""
     o = ""
     for sx in (-1, 1):
         A = tube([(sx * 38, -10, 10), (sx * 50, 14, 9.5), (sx * 54, 34, 9.5)])
         if short:
             o += part(A, skin, s=(-2, -3), ol=sko)
-            o += part(tube([(sx * 37, -11, 11.5), (sx * 44, 4, 11)]), col, s=(-2, -3), ol=ol)
+            sl = tube([(sx * 37, -11, 11.5), (sx * 44, 4, 11)])
+            o += comp(sl, col, pattern, s=(-2, -3), ol=ol) if pattern else part(sl, col, s=(-2, -3), ol=ol)
         else:
             o += part(A, col, s=(-2, -3), ol=ol)
             if cuff:
@@ -124,16 +132,16 @@ def face(mouth="smile", lx=.5, ly=1.2, brows=None, wrinkles=False, cheek=True, e
 
 def person(skin, top, pants, shoe="#3B3446", hair_back="", hair_front="", hat="", behind="", sleeve=None,
            short=False, cuff=None, top_ol=None, inner="", over="", length=56, flare=2, mouth="smile", brows=None,
-           wrinkles=False, boots=None, leg_cuff=None, ears=True, hands_over=""):
+           wrinkles=False, boots=None, leg_cuff=None, ears=True, hands_over="", sleeve_pattern=""):
     """A grown-up in person units (feet on y = FOOT). The hooks add clothes and hair:
     hair_back (behind the head), behind (behind the head, in front of the back hair: a comb),
     inner (clipped to the top: pockets, stripes), over (on the top: apron, bag), hair_front, hat."""
-    sko = lin(skin)
+    sko = skol(skin)
     o = hair_back
     o += legs(pants, shoe, boots=boots, cuff=leg_cuff)
     o += comp(torso_d(length, flare), top, inner, s=(-8, -9), ol=top_ol)
     o += over
-    o += arms(sleeve or top, skin, sko, ol=top_ol, short=short, cuff=cuff)
+    o += arms(sleeve or top, skin, sko, ol=top_ol, short=short, cuff=cuff, pattern=sleeve_pattern)
     o += hands_over
     o += neck(skin, sko)
     o += behind
@@ -350,21 +358,22 @@ def grandpa():
         inner += part(rr(sx * 26 - 10, 30, 20, 16, 3), shd(card), s=None, ol=lin(card))
     inner += part(rr(-60, 50, 120, 6, 0), shd(card), s=None, ol=False)
     grey = "#D9D6E0"
-    capd = ("M-43,-54 C-50,-90 -24,-110 2,-109 C30,-108 50,-90 43,-54 C41,-66 38,-76 32,-84 "
-            "C22,-90 10,-94 -2,-94 C-14,-94 -26,-90 -32,-84 C-38,-76 -41,-66 -43,-54Z")
+    capd = ("M-43,-54 C-52,-66 -48,-80 -42,-86 C-44,-98 -30,-108 -18,-104 C-10,-114 8,-114 14,-106 "
+            "C28,-110 42,-100 40,-88 C50,-80 52,-66 43,-54 C41,-66 38,-76 32,-82 "
+            "C22,-90 10,-92 -2,-92 C-14,-92 -26,-88 -32,-82 C-38,-76 -41,-66 -43,-54Z")
     tufts = part(capd, grey, s=(-3, -4), sh="#BDB8C9", ol="#9C97AE", hl=hi("M-22,-100 C-12,-105 0,-106 10,-105", 3.5, .8))
     tufts += ln("M-20,-100 C-10,-96 0,-96 8,-100 M-6,-106 C2,-100 12,-100 22,-104", "#AFA9C0", .6)
     stache = part("M0,-46 C-4,-51 -14,-52 -17,-46 C-18,-42 -12,-41 -9,-43 C-6,-45 -2,-45 0,-43 C2,-45 6,-45 9,-43 "
                   "C12,-41 18,-42 17,-46 C14,-52 4,-51 0,-46Z", grey, s=None, ol="#9C97AE")
     o = person(skin, card, "#8C7B6B", shoe="#6E4A32", inner=inner, cuff=shd(card), hair_front=tufts,
-               brows="#A9A4B8", wrinkles=True, mouth="none")
+               brows="#A9A4B8", mouth="none")
     o += ln("M-8,-38 Q0,-33 8,-38", MOUTH, .8) + stache
     return o
 
 
 def sister():
     """A school-age girl: her own shorter body (feet on y = 92), the same head."""
-    skin, sko = "#F7CFAE", lin("#F7CFAE")
+    skin, sko = "#F7CFAE", skol("#F7CFAE")
     hair, ribbon = "#2E2433", "#F2463F"
     shirt, skirt = "#FFFFFF", "#3E5BA8"
     o = ""
@@ -412,12 +421,10 @@ def sister():
 
 def hairdresser():
     skin, apron = "#B9805A", "#4A4F6A"
-    stripes = "".join(flat(rr(x, -30, 7, 100, 0), "#F2463F", op=.9) for x in (-46, -30, -14, 2, 18, 34))
+    stripes = "".join(flat(rr(x, -30, 6, 100, 0), "#F2463F", op=.9) for x in (-61, -49, -37, -25, -13, -1, 11, 23, 35, 47, 59))
     a = "M-26,-14 L26,-14 L28,10 L36,14 L38,70 Q38,74 34,74 L-34,74 Q-38,74 -38,70 L-36,14 L-28,10 Z"
     over = ln("M-24,-14 C-24,-22 -20,-26 -16,-30 M24,-14 C24,-22 20,-26 16,-30", apron, 1.6)
     over += part(a, apron, s=(-5, -6), hl=hi("M-30,20 L-30,60", 3, .25))
-    over += g(combd(0, 0, 0, "#FFD43B"), "translate(-20 33) rotate(-80) scale(.55)")
-    over += part(rr(-28, 28, 10, 16, 2), "#C9CED9", s=None)
     for sx in (-1, 1):
         over += part(rr(sx * 18 - 13, 34, 26, 22, 4), lt(apron, .12), s=None, ol=lin(apron))
     over += ln("M0,34 L0,56", lin(apron), .7)
@@ -426,7 +433,7 @@ def hairdresser():
             "C10,-78 -14,-80 -26,-86 C-34,-78 -40,-68 -43,-56Z")
     hfront = part(hair, "#3A2626", s=(-3, -4), hl=hi("M-18,-100 C-6,-106 6,-110 18,-110", 4, .45))
     return person(skin, "#FFFFFF", "#3B3446", shoe="#2E2A3A", sleeve="#FFFFFF", top_ol=WHITE_OL, inner=stripes,
-                  short=True, over=over, behind=comb, hair_front=hfront, mouth="open")
+                  short=True, over=over, behind=comb, hair_front=hfront, mouth="open", sleeve_pattern=stripes)
 
 
 def combd(cx, cy, rot, col="#2EC4B6"):
@@ -454,7 +461,7 @@ def painter():
     pal = palette_d()
     hands = g(part(pal[0], "#E3B074", s=(-3, -4), fr=True, hl=hi("M-16,-8 C-10,-14 0,-16 10,-14", 3, .6)) + pal[1],
               "translate(-66 34) rotate(-18)")
-    hands += part(ell(-55, 42, 9), skin, s=None, ol=lin(skin))
+    hands += part(ell(-55, 42, 9), skin, s=None, ol=skol(skin))
     o = person(skin, smock, "#3E5BA8", shoe="#E8434F", top_ol=lin("#E8C98F"), inner=blots, over=bow, length=72, flare=6,
                hair_back=hair_back, hands_over=hands, hat=beret(), mouth="open")
     return o
@@ -478,7 +485,7 @@ def beret():
 # ---------------------------------------------------------------- the baby and the animals (their own units)
 def baby():
     """A baby sitting on the ground (bottom on y = 60), arms open."""
-    skin, sko = "#F2C29C", lin("#F2C29C")
+    skin, sko = "#F2C29C", skol("#F2C29C")
     suit = "#FFE27A"
     o = ""
     # legs forward: the soles face us
@@ -611,7 +618,7 @@ OWNERS = {
     "painter": lambda: owner_picture(painter),
     "baby": lambda: owner_picture(baby, s=.86, foot=60, shadow=(54, 8)),
     "dog": lambda: owner_picture(dog, s=.82, foot=88, shadow=(52, 8)),
-    "rabbit": lambda: owner_picture(rabbit, s=.84, foot=86, shadow=(48, 8)),
+    "rabbit": lambda: owner_picture(rabbit, s=.78, foot=86, shadow=(46, 8)),
     "cat": lambda: owner_picture(cat, s=.82, foot=88, shadow=(52, 8)),
 }
 
