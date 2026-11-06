@@ -523,15 +523,17 @@ PSH = "#4A3420"        # the colour of paper shadows
 
 def paper(d, fill, op=None, grain=True, sh=1.0):
     """Style B: one paper layer (torn edge, soft shadow under it, grain), no outline."""
-    td, (x0, y0, x1, y1) = torn(d, bbox=True)
+    td, (x0, y0, x1, y1) = torn(d, step=3.4 if ONE_SHADOW else 2.6, bbox=True)
     k = shape(td)
     o_ = f' opacity="{op}"' if op is not None else ""
     c = mute(fill)
-    f = lg([(0, lt(c, .07)), (1, tone(c, .965))], 0, 0, .8, 1)
+    f = c if ONE_SHADOW else lg([(0, lt(c, .07)), (1, tone(c, .965))], 0, 0, .8, 1)
     out = ""
-    if sh:
-        out += use(k, f'fill="{PSH}" opacity="{.10 * sh:.3g}"', f' transform="translate({n(1.9 / SC)} {n(3.4 / SC)})"')
-        out += use(k, f'fill="{PSH}" opacity="{.16 * sh:.3g}"', f' transform="translate({n(.8 / SC)} {n(1.5 / SC)})"')
+    if sh and not ONE_SHADOW:
+        out += use(k, f'fill="{PSH}" opacity="{_num(.10 * sh)}"', f' transform="translate({n(1.9 / SC)} {n(3.4 / SC)})"')
+        out += use(k, f'fill="{PSH}" opacity="{_num(.16 * sh)}"', f' transform="translate({n(.8 / SC)} {n(1.5 / SC)})"')
+    elif sh:
+        out += use(k, f'fill="{PSH}" opacity="{_num(.2 * sh)}"', f' transform="translate({n(1.1 / SC)} {n(2.1 / SC)})"')
     out += use(k, f'fill="{f}"{o_}')
     if grain and GRAIN:
         T = GRAIN_T / SC
@@ -542,6 +544,7 @@ def paper(d, fill, op=None, grain=True, sh=1.0):
 
 
 GRAIN_T = 40.0     # the paper fibres come in tiles this big (picture units)
+ONE_SHADOW = False # the small paper things of the map get one shadow copy, not two
 
 
 def make_grain(gap=4.2, seed=7):
@@ -586,7 +589,7 @@ def comp(d, fill, inner="", s=(-6, -7), sh=None, ol=None, hl=""):
     if STYLE == "B":
         out = paper(d, fill)
         if inner:
-            out += f'<g clip-path="{clip_of(shape(torn(d)))}">{inner}</g>'
+            out += f'<g clip-path="{clip_of(shape(torn(d, step=3.4 if ONE_SHADOW else 2.6)))}">{inner}</g>'
         return out
     out = part(d, fill, s, sh, False)
     k = shape(d)
@@ -893,8 +896,25 @@ POSES = ("wave", "think", "cheer")
 
 def svg_doc(body, w, h, mapper=None):
     defs = D.svg(mapper)
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+    text = (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
             f'width="{w}" height="{h}" viewBox="0 0 {w} {h}">{defs}{body}</svg>\n')
+    return short_ids(text)
+
+
+def short_ids(text):
+    """The ids are hashes while drawing (so equal shapes share one); here they get short names."""
+    ids = re.findall(r' id="([^"]+)"', text)
+    abc = "abcdefghijklmnopqrstuvwxyz"
+    name = {}
+    for i, k in enumerate(ids):
+        t, j = "", i
+        while True:
+            t = abc[j % 26] + t
+            j = j // 26 - 1
+            if j < 0:
+                break
+        name[k] = t
+    return re.sub(r'(id="|#)([A-Za-z0-9_]+)(?=["\)])', lambda m: m.group(1) + name.get(m.group(2), m.group(2)), text)
 
 
 def abu_svg(land, pose):
@@ -934,12 +954,12 @@ def reg(box):
 
 def place(name, cx, cy, w, h, sw=1.8, style="A", flip=False, **kw):
     """Draw `name` scaled to fit a w x h box centred on (cx, cy); outlines `sw` map units wide."""
-    global SC, SW, STYLE
+    global SC, SW, STYLE, ONE_SHADOW
     x0, y0, x1, y1 = BOX[name]
     s = min(w / (x1 - x0), h / (y1 - y0))
-    SC, SW, STYLE = s, sw / s, style
+    SC, SW, STYLE, ONE_SHADOW = s, sw / s, style, True
     svg = globals()[name](**kw)
-    SC, SW, STYLE = 1.0, 2.2, "A"
+    SC, SW, STYLE, ONE_SHADOW = 1.0, 2.2, "A", False
     mx, my = (x0 + x1) / 2, (y0 + y1) / 2
     fx = -1 if flip else 1
     return f'<g transform="translate({n(cx)} {n(cy)}) scale({fx * s:.4f} {s:.4f}) translate({n(-mx)} {n(-my)})">{svg}</g>'
@@ -994,7 +1014,7 @@ def bush(col="#6CCB5F"):
 @reg((-8, -40, 8, 40))
 def flower(col="#FF7FA3"):
     o = ln("M0,30 L0,-2", "#4FA84A", 1.2)
-    o += "".join(part(ell(math.cos(a) * 7, -8 + math.sin(a) * 7, 5), col, s=None, cls=.7) for a in (0, 1.26, 2.51, 3.77, 5.03))
+    o += part("".join(ell(math.cos(a) * 7, -8 + math.sin(a) * 7, 5) for a in (0, 1.26, 2.51, 3.77, 5.03)), col, s=None, cls=.7)
     return o + part(ell(0, -8, 4), GOLD, s=None, cls=.7)
 
 
@@ -1269,17 +1289,24 @@ def forest_ground():
     top = f"M-10,{FOREST_TOP + 2} " + " ".join(
         f"Q{x + 30},{FOREST_TOP - 8 + (8 if (x // 60) % 2 else 0)} {x + 60},{FOREST_TOP + 2}" for x in range(-10, 400, 60))
     blades = " ".join(f"L{x + 6},{FOREST_BOTTOM + 14 + (k % 3) * 4} L{x + 12},{FOREST_BOTTOM}" for k, x in enumerate(range(400, -20, -12)))
-    global GRAIN, STYLE
-    STYLE = "B"
-    make_grain(gap=5.5, seed=3)
-    o = paper(top + f" L400,{FOREST_BOTTOM} {blades} Z", "#A9D08E")
+    global GRAIN, STYLE, GRAIN_T
+    STYLE, GRAIN_T = "B", 64.0
+    ground = top + f" L400,{FOREST_BOTTOM} {blades} Z"
+    o = paper(ground, "#A9D08E", grain=False)
     o += paper(f"M-10,{FOREST_TOP + 70} C60,{FOREST_TOP + 46} 130,{FOREST_TOP + 66} 176,{FOREST_TOP + 100} "
-               f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F")
+               f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F", grain=False)
     o += paper(f"M240,{FOREST_TOP + 22} C300,{FOREST_TOP + 6} 360,{FOREST_TOP + 12} 400,{FOREST_TOP + 28} "
-               f"L400,{FOREST_TOP + 74} C340,{FOREST_TOP + 74} 280,{FOREST_TOP + 56} 240,{FOREST_TOP + 22}Z", "#97C47C")
+               f"L400,{FOREST_TOP + 74} C340,{FOREST_TOP + 74} 280,{FOREST_TOP + 56} 240,{FOREST_TOP + 22}Z", "#97C47C", grain=False)
     o += paper(f"M200,{FOREST_BOTTOM - 40} C250,{FOREST_BOTTOM - 62} 330,{FOREST_BOTTOM - 60} 400,{FOREST_BOTTOM - 46} "
-               f"L400,{FOREST_BOTTOM - 4} C320,{FOREST_BOTTOM - 10} 250,{FOREST_BOTTOM - 14} 200,{FOREST_BOTTOM - 40}Z", "#9CC985")
-    STYLE = "A"
+               f"L400,{FOREST_BOTTOM - 4} C320,{FOREST_BOTTOM - 10} 250,{FOREST_BOTTOM - 14} 200,{FOREST_BOTTOM - 40}Z", "#9CC985", grain=False)
+    # the fibres, once over the whole floor (hills included)
+    make_grain(gap=5.5, seed=3)
+    k = shape(torn(ground))
+    T = GRAIN_T
+    tiles = "".join(f'<use href="#{GRAIN}" transform="translate({n(i * T)} {n(j * T)})"/>'
+                    for j in range(math.floor((FOREST_TOP - 12) / T), math.ceil((FOREST_BOTTOM + 26) / T)) for i in range(0, math.ceil(W / T)))
+    o += f'<g clip-path="{clip_of(k)}">{tiles}</g>'
+    STYLE, GRAIN_T, GRAIN = "A", 40.0, None
     return o
 
 

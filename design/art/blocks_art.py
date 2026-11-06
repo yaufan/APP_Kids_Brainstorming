@@ -275,7 +275,7 @@ def cat():
     return o
 
 
-RAB, RABD, RABL = "#B3BAD3", "#959DBB", "#D6DAEA"
+RAB, RABD, RABL = "#B3BAD3", "#A0A8C6", "#D6DAEA"
 
 
 @thing((-78, -112, 70, 62))
@@ -753,7 +753,7 @@ def rainbow():
         x1, y1 = pt(160, 40, 31, a)
         o += cap(x0, y0, x1, y1, 3, CY)
     for cx in (22, 178):
-        o += circle(cx - 10, 160, 11, "#DCE1F6") + circle(cx + 4, 154, 14, "#DCE1F6") + rect(cx - 22, 156, 42, 14, "#DCE1F6", rx=7)
+        o += circle(cx - 10, 160, 11, "#CDD4F2") + circle(cx + 4, 154, 14, "#CDD4F2") + rect(cx - 22, 156, 42, 14, "#CDD4F2", rx=7)
     return o
 
 
@@ -913,7 +913,6 @@ def export():
 
 
 def preview(out):
-    svgs = all_svgs()
     css = ("body{margin:0;padding:16px;background:#EEF0FF;font:13px sans-serif;color:#2B2D42;width:1640px}"
            "h2{margin:18px 0 8px}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}"
            ".c{background:#fff;border-radius:16px;padding:6px;text-align:center}.c img{display:block}"
@@ -934,7 +933,6 @@ def preview(out):
     h.append(f"<h2>scene_kingdom</h2><div class='row'><img src='file://{p}' width='390' height='844'>"
              f"<img src='file://{p}' width='195' height='422'></div>")
     render_html("".join(h), out, 1672, 800)
-    _ = svgs
 
 
 if __name__ == "__main__":

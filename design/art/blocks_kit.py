@@ -80,12 +80,6 @@ def clip(inner):
     return f"url(#{k})"
 
 
-def define(key, inner):
-    """A shape reused with <use href="#key">."""
-    _DEFS.setdefault(key, inner.replace("<path ", f'<path id="{key}" ', 1) if inner.startswith("<path ") else inner)
-    return key
-
-
 def lg(stops, x1=0, y1=0, x2=0, y2=1):
     k = "l" + _h(stops, x1, y1, x2, y2)
     st = "".join(f'<stop offset="{o}" stop-color="{c}"/>' for o, c in stops)

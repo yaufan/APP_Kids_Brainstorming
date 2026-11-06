@@ -717,6 +717,663 @@ def tissue():
     return o
 
 
+# ================================================================ PLACES (200 x 200, drawn in picture units)
+def read_places():
+    """{place id: (scene id, x, y, w)} from content.dart's sortScenes."""
+    places, scene = {}, None
+    for line in CONTENT.read_text().splitlines():
+        m = re.search(r"SortScene\('(\w+)'", line)
+        if m:
+            scene = m.group(1)
+        m = re.search(r"Place\('(\w+)', '[^']*', x: ([\d.]+), y: ([\d.]+), w: ([\d.]+)", line)
+        if m and scene:
+            places[m.group(1)] = (scene, float(m.group(2)), float(m.group(3)), float(m.group(4)))
+    return places
+
+
+PLACES = {}
+U = 1.0     # drawing-unit factor of the place being drawn: offsets and highlights times U look the same on screen
+
+
+def place(f):
+    PLACES[f.__name__] = f
+    return f
+
+
+def S(a=6, b=7):
+    """A cel-shadow offset that looks the same on screen in every place."""
+    return (-a * U, -b * U)
+
+
+def H(d, w=5, op=.75):
+    return hi(d, w * U, op)
+
+
+def fit_bottom(fn, box, fill, bottom=194, cx=100, **kw):
+    """fit() with the drawing's lowest point at `bottom` (standing on the floor)."""
+    x0, y0, x1, y1 = box
+    s = fill / max(x1 - x0, y1 - y0)
+    return fit(fn, box, fill=fill, cx=cx, cy=bottom - (y1 - y0) * s / 2, **kw)
+
+
+# ---------------------------------------------------------------- 房間
+def _teddy_head(col="#C98A52"):
+    li = "#F3D2A6"
+    o = ""
+    for sx in (-1, 1):
+        o += part(ell(sx * 40, -66, 17), col, s=(-3, -4)) + part(ell(sx * 40, -66, 8.5), li, s=None)
+    o += part(ell(0, -28, 48, 42), col, s=(-9, -9), hl=hi("M-30,-56 C-20,-64 -6,-67 6,-66", 5, .55))
+    o += part(ell(0, -12, 19, 14), li, s=None, ol=lin(col))
+    o += part(ell(0, -18, 7.5, 5.5), "#3A2418", s=None, hl=hidot(-2, -20, 1.8))
+    o += ln("M0,-12 L0,-6 M-6,-4 Q0,0 6,-4", "#3A2418", .9)
+    for sx in (-1, 1):
+        o += dot_eye(sx * 20, -32, 7.5)
+    return o
+
+
+def _toybox(col="#4FB3F6"):
+    o = []
+    lid = "M-72,-26 L-62,-74 C-60,-80 -56,-82 -50,-82 L50,-82 C56,-82 60,-80 62,-74 L72,-26 Z"
+    o.append(part(lid, shd(col), s=(-4, -5)) + part(rr(-56, -90, 112, 12, 5), YELLOW, s=None)
+             + part(rr(-30, -60, 60, 14, 7), lt(col, .35), s=None, ol=lin(col)))
+    o.append(flat("M-66,-26 L66,-26 L60,-14 L-60,-14 Z", "#3A3150"))
+    o.append(g(_teddy_head(), "translate(-30 -2) scale(.5) rotate(-10)"))
+    o.append(g(part(rr(-20, -20, 40, 40, 6), YELLOW, s=(-4, -5)) + part(star_d(12, 5.5, round_=.18), "#FF8A3D", s=None),
+               "translate(26 -36) rotate(12)"))
+    o.append(part("M48,-38 C48,-58 66,-62 68,-46 L68,-20 L48,-20Z", GREEN, s=(-3, -4)))
+    front = "M-74,-26 L74,-26 L74,48 C74,56 68,62 60,62 L-60,62 C-68,62 -74,56 -74,48 Z"
+    trim = "M-80,-30 L80,-30 L80,-12 L-80,-12 Z"
+    o.append(comp(front, col, part(trim, YELLOW, s=None, ol=lin(YELLOW))
+                  + part(star_d(17, 8, round_=.18, cx=0, cy=20), "#FFFFFF", s=(-2, -3), ol=lin(col)), s=(-9, -10)))
+    o.append(ln("M-74,-12 L74,-12", lin(col), .9))
+    o.append(part(ell(-44, 20, 7), "#FF7FA3", s=None) + part(ell(44, 20, 7), "#FF7FA3", s=None))
+    return "".join(o)
+
+
+@place
+def toy_box():
+    return ground(100, 192, 84, 8) + fit_bottom(_toybox, (-84, -98, 84, 64), 180)
+
+
+def _bookshelf():
+    wood, back = "#D08E57", "#9E6339"
+    o = part(rr(-46, -150, 28, 26, 6), "#E8735A", s=(-2, -3)) + part(ell(-32, -150, 16, 12), GREEN, s=(-2, -3))
+    o += part(rr(-60, -126, 120, 252, 9), wood, s=(-7, -8))
+    shelves = [(-114, -44), (-32, 40), (52, 114)]
+    rng = random.Random(4)
+    cols = [RED, BLUE, YELLOW, GREEN, PURPLE, PINK, TEAL, "#FF8A3D"]
+    for si, (y0, y1) in enumerate(shelves):
+        o += part(f"M-50,{y0} L50,{y0} L50,{y1} L-50,{y1} Z", back, s=None, ol=lin(wood))
+        x, k = -48, 0
+        while x < 44:
+            if si == 1 and k == 2:
+                x += 38
+                k += 1
+                continue
+            bw = rng.choice([12, 14, 16, 18])
+            if x + bw > 48:
+                break
+            bh = rng.randint(int((y1 - y0) * .62), int((y1 - y0) * .9))
+            c = cols[(si * 3 + k) % len(cols)]
+            o += part(rr(x, y1 - bh, bw, bh, 3), c, s=(-2, -2.5))
+            o += ln(f"M{x + 3},{y1 - bh + 10} L{x + bw - 3},{y1 - bh + 10}", lt(c, .55), .62)
+            x += bw + 2
+            k += 1
+        o += part(rr(-58, y1, 116, 9, 3), lt(wood, .12), s=None, ol=lin(wood))
+    o += part(rr(-54, 124, 14, 8, 3), shd(wood), s=None) + part(rr(40, 124, 14, 8, 3), shd(wood), s=None)
+    return o
+
+
+@place
+def bookshelf():
+    return ground(100, 193, 52, 6) + fit_bottom(_bookshelf, (-66, -162, 66, 132), 192)
+
+
+def _basket(col="#E9B866"):
+    body = "M-58,-36 L58,-36 L48,56 C47,61 43,64 38,64 L-38,64 C-43,64 -47,61 -48,56 Z"
+    weave = "".join(ln(f"M-70,{y} L70,{y}", shd(col), .62) for y in (-14, 8, 30, 50))
+    for r_, y in enumerate((-36, -14, 8, 30)):
+        for x in range(-64 + (r_ % 2) * 9, 70, 18):
+            weave += ln(f"M{x},{y + 3} L{x},{y + 19}", shd(col), .62)
+    o = part(ell(0, -38, 60, 13), "#8C5A2C", s=None)
+    o += part("M-30,-44 C-24,-60 -2,-64 10,-52 C18,-62 34,-58 36,-44 L30,-34 L-26,-36Z", "#FF8FB1", s=(-2, -3))
+    o += comp(body, col, weave, s=(-8, -9))
+    o += part("M-60,-40 C-60,-48 60,-48 60,-40 C60,-31 -60,-31 -60,-40Z", shd(col), s=None, ol=lin(col))
+    o += part(rr(-46, -26, 22, 9, 4.5), "#8C5A2C", s=None) + part(rr(24, -26, 22, 9, 4.5), "#8C5A2C", s=None)
+    towel = "M-48,-44 C-40,-48 -18,-48 -8,-44 L-10,0 C-15,7 -21,1 -27,7 C-33,13 -40,7 -47,3 Z"
+    o += comp(towel, "#7CC7FF", flat("M-60,-10 L0,-10 L0,-4 L-60,-4Z", "#FFFFFF"), s=(-3, -4))
+    return o
+
+
+@place
+def laundry():
+    return ground(100, 192, 66, 7) + fit_bottom(_basket, (-66, -64, 70, 66), 172)
+
+
+def _bed(col="#7C8CF8"):
+    wood = "#C9834F"
+    o = part("M-100,60 L-100,-56 C-100,-74 -72,-80 -72,-62 L-72,60 Z", wood, s=(-4, -5))
+    o += part(rr(-96, 44, 12, 18, 3), shd(wood), s=None) + part(rr(84, 44, 12, 18, 3), shd(wood), s=None)
+    o += part(rr(-78, -10, 162, 30, 10), "#FFFFFF", s=(-3, -4))
+    o += part(rr(-76, 18, 160, 30, 6), "#B98B6A", s=None)
+    o += ln("M-66,-2 C-56,-6 -40,-7 -28,-6", "#D9D3EA", .7)
+    blanket = ("M-16,-24 C10,-30 50,-30 82,-22 C90,-20 92,-12 92,-4 L90,40 C90,46 86,48 80,48 L-16,48 "
+               "C-22,48 -24,44 -24,38 L-24,-14 C-24,-20 -22,-23 -16,-24Z")
+    dots = "".join(part(star_d(6, 3, cx=x, cy=y, round_=.15), "#FFFFFF", s=None, ol=False) for x, y in
+                   ((0, -6), (30, 10), (60, -8), (8, 28), (44, 34), (74, 22)))
+    o += comp(blanket, col, dots, s=(-6, -7))
+    o += ln("M-24,-4 C10,-12 50,-12 92,-6", lin(col), .62)
+    o += part("M76,60 L76,-14 C76,-28 104,-28 104,-14 L104,60 Z", wood, s=(-3, -4))
+    return o
+
+
+@place
+def bed():
+    return ground(100, 192, 92, 8) + fit_bottom(_bed, (-104, -82, 104, 62), 194)
+
+
+# ---------------------------------------------------------------- 浴室
+def _wall_shelf(x0, x1, y, col="#FFFFFF", ol=WHITE_OL):
+    """A little wall shelf: a board at y with two brackets under it."""
+    o = ""
+    for bx in (x0 + 18, x1 - 18):
+        o += part(f"M{n(bx - 5)},{n(y + 10)} L{n(bx + 5)},{n(y + 10)} L{n(bx + 5)},{n(y + 34)} L{n(bx - 5)},{n(y + 22)}Z", col, s=None, ol=ol)
+    o += part(rr(x0, y, x1 - x0, 13, 6), col, s=S(3, 4), ol=ol, hl=H(f"M{n(x0 + 10)},{n(y + 4)} L{n(x1 - 30)},{n(y + 4)}", 3, .9))
+    return o
+
+
+@place
+def brush_cup():
+    col = "#FFD43B"
+    o = _wall_shelf(18, 182, 150)
+    o += flat(ell(100, 148, 48, 5), K.SHADOW, .18)
+    body = "M50,62 L150,62 L138,140 C137,146 132,150 126,150 L74,150 C68,150 63,146 62,140Z"
+    o += comp(body, col, part(star_d(16, 7.5, cx=100, cy=108, round_=.18), "#FFFFFF", s=None, ol=lin(col), k=.8)
+              + flat("M30,76 L170,76 L170,84 L30,84Z", lt(col, .45)), s=S(9, 10), hl=H("M64,92 L70,134", 6, .6))
+    o += part(ell(100, 62, 50, 13), lt(col, .2), s=None)
+    o += flat(ell(100, 64, 42, 9), "#7A5A20", .55)
+    o += K.stroke(ell(100, 62, 50, 13), lin(col))
+    return o
+
+
+@place
+def towel_rack():
+    bar, plate = "#5BB8E8", "#FFFFFF"
+    o = flat("M26,74 L174,74 L170,84 L30,84Z", K.SHADOW, .08)
+    for x in (22, 178):
+        o += part(ell(x, 64, 15), plate, s=S(2, 3), ol=WHITE_OL) + part(ell(x, 64, 7), "#D9E6F2", s=None, ol=WHITE_OL, k=.7)
+    o += part(rr(18, 55, 164, 18, 9), bar, s=S(3, 4), hl=H("M30,60 L168,60", 4, .8))
+    for x in (22, 178):
+        o += part(rr(x - 9, 52, 18, 24, 7), lt(bar, .25), s=None, ol=lin(bar))
+    o += part(ell(100, 40, 10), "#FFFFFF", s=None, ol=WHITE_OL, k=.8) + part(rr(96, 38, 8, 18, 4), "#D9E6F2", s=None, ol=WHITE_OL, k=.8)
+    return o
+
+
+@place
+def bathtub():
+    tub, ol, water, foot = "#FFFFFF", "#7E84B8", "#7FD0FF", GOLD
+    o = ground(100, 193, 90, 7)
+    for x in (34, 166):
+        o += part(f"M{x - 10},170 L{x + 10},170 L{x + 8},184 C{x + 8},192 {x - 8},192 {x - 8},184Z", foot, s=None)
+    o += part("M182,92 L182,52 C182,40 166,40 166,52 L166,58", "none", s=None, ol=False)
+    o += K.hose("M174,96 L174,50 C174,38 158,36 154,48", "#C9D2E0", 9 * U, ol="#7E869A")
+    o += part(ell(152, 56, 7, 5), "#C9D2E0", s=None, ol="#7E869A")
+    o += part("M14,92 C40,76 160,76 186,92Z", water, s=None, ol=lin(water))
+    for x, y, r in ((30, 82, 12), (48, 70, 16), (70, 76, 11), (132, 76, 12), (152, 68, 15), (170, 80, 10), (92, 82, 8), (60, 56, 8)):
+        o += part(ell(x, y, r), "#F4FBFF", s=None, ol="#8EC6E8", k=.8, hl=hidot(x - r * .35, y - r * .4, r * .25))
+    body = "M12,96 L188,96 L180,148 C176,168 158,176 138,176 L62,176 C42,176 24,168 20,148Z"
+    o += comp(body, tub, flat("M0,96 L200,96 L200,104 L0,104Z", lt(water, .55)), s=S(9, 10), ol=ol, hl=H("M30,112 C32,132 40,150 54,160", 6, .9))
+    o += part(rr(4, 88, 192, 14, 7), tub, s=None, ol=ol)
+    return o
+
+
+@place
+def soap_dish():
+    col = "#7ED6A8"
+    o = _wall_shelf(10, 190, 136)
+    o += flat(ell(100, 134, 70, 6), K.SHADOW, .16)
+    o += part("M24,112 C24,136 176,136 176,112 Z", shd(col), s=None, ol=lin(col))
+    o += part(ell(100, 112, 76, 22), col, s=S(4, 5))
+    o += part(ell(100, 110, 62, 14), lt(col, .4), s=None, ol=lin(col), k=.8)
+    o += ln("M60,104 L60,116 M80,100 L80,120 M100,98 L100,122 M120,100 L120,120 M140,104 L140,116", lt(col, .1), 1.2)
+    o += H("M40,104 C52,98 70,95 86,94", 4, .8)
+    return o
+
+
+# ---------------------------------------------------------------- 廚房
+FRIDGE, FRIDGE_OL, COLD = "#CFE9FF", "#6F86B8", "#EEF8FF"
+
+
+@place
+def fridge():
+    o = ground(76, 193, 64, 6)
+    o += part(rr(26, 186, 14, 9, 3), "#6E6880", s=None) + part(rr(108, 186, 14, 9, 3), "#6E6880", s=None)
+    body = rr(16, 2, 116, 188, 12)
+    inside = rr(26, 12, 96, 168, 8)
+    o += part(body, FRIDGE, s=S(8, 9), ol=FRIDGE_OL)
+    glow = flat(ell(74, 14, 60, 30), "#FFFFFF", .8)
+    shelves = "".join(part(rr(26, y, 96, 6, 2), "#FFFFFF", s=None, ol="#9DB6DA", k=.8) for y in (64, 114))
+    crisper = part(rr(32, 144, 84, 32, 6), "#E4F3FF", s=None, ol="#9DB6DA", k=.8) + ln("M44,160 L104,160", "#B8CDEB", .8)
+    o += comp(inside, COLD, glow + shelves + crisper + flat("M26,12 L36,12 L36,180 L26,180Z", "#DCEEFF"), s=None, ol=FRIDGE_OL, k=.9)
+    o += part(ell(74, 20, 9, 4), "#FFF6C2", s=None, ol="#E0C860", k=.6)
+    door = "M132,6 L190,26 C194,27 196,30 196,34 L196,168 C196,172 194,175 190,176 L132,190Z"
+    o += part(door, FRIDGE, s=S(4, 5), ol=FRIDGE_OL)
+    o += part("M138,18 L188,34 L188,166 L138,180Z", COLD, s=None, ol=FRIDGE_OL, k=.8)
+    for y0 in (70, 128):
+        o += part(f"M138,{y0} L188,{y0 + 6} L188,{y0 + 18} L138,{y0 + 16}Z", "#FFFFFF", s=None, ol="#9DB6DA", k=.8)
+    return o
+
+
+@place
+def freezer():
+    o = ""
+    body = rr(16, 58, 116, 138, 12)
+    o += part(body, FRIDGE, s=S(8, 9), ol=FRIDGE_OL)
+    o += part(rr(26, 68, 96, 46, 7), "#3A4A6A", s=None, ol=FRIDGE_OL, k=.8)
+    o += flat("M28,70 C40,78 50,70 60,78 C70,70 84,78 96,70 C104,76 112,70 120,72 L120,82 L28,82Z", "#FFFFFF", .85)
+    for x, h in ((40, 12), (58, 8), (80, 14), (104, 9)):
+        o += part(f"M{x - 4},76 L{x + 4},76 L{x},{76 + h}Z", "#EAF6FF", s=None, ol="#9DB6DA", k=.6)
+    inside = poly([(10, 132), (138, 132), (126, 102), (22, 102)])
+    ice = ""
+    for x, y in ((44, 112), (64, 118), (88, 110), (108, 120), (54, 126), (96, 126)):
+        ice += part(rr(x - 8, y - 7, 16, 14, 3), "#DDF2FF", s=None, ol="#8EB4DE", k=.6, hl=hidot(x - 3, y - 3, 1.6))
+    frost = flat("M20,104 C34,98 44,108 58,100 C70,108 84,98 98,106 C110,98 120,106 128,102 L130,110 L18,110Z", "#FFFFFF", .9)
+    o += comp(inside, "#B9DDF8", frost + ice, s=None, ol=FRIDGE_OL, k=.9)
+    front = rr(8, 130, 132, 62, 10)
+    o += comp(front, FRIDGE, flat(blob([(4, 160), (16, 150), (30, 156), (36, 176), (20, 196), (0, 196)]), "#FFFFFF", .8)
+              + flat(blob([(144, 136), (128, 140), (118, 132), (130, 124), (146, 124)]), "#FFFFFF", .8), s=S(6, 7), ol=FRIDGE_OL)
+    o += part(rr(50, 142, 48, 10, 5), "#9DB6DA", s=None, ol=FRIDGE_OL, k=.8)
+    for a in (0, 60, 120):
+        o += g(ln("M0,-11 L0,11 M-4,-8 L0,-4 L4,-8 M-4,8 L0,4 L4,8", "#5A86D6", .9), f"translate(74 172) rotate({a})")
+    o += sparkle(140, 104, 7, "#FFFFFF") + sparkle(12, 120, 5, "#FFFFFF")
+    return o
+
+
+@place
+def cupboard():
+    wood, inner, ol = "#F2C48A", "#FFF3DF", "#B9864E"
+    o = flat(rr(30, 182, 140, 8, 4), K.SHADOW, .1)
+    o += part("M30,24 L6,8 L6,188 L30,176Z", wood, s=S(3, 4), ol=ol) + part(ell(14, 100, 3.5), "#8C5A2C", s=None)
+    o += part("M170,24 L194,8 L194,188 L170,176Z", wood, s=S(3, 4), ol=ol) + part(ell(186, 100, 3.5), "#8C5A2C", s=None)
+    body = rr(26, 16, 148, 166, 10)
+    o += part(body, wood, s=S(7, 8), ol=ol)
+    shelves = "".join(part(rr(36, y, 128, 7, 2), lt(wood, .25), s=None, ol=ol, k=.8) for y in (74, 126))
+    o += comp(rr(36, 26, 128, 146, 6), inner, flat("M36,26 L164,26 L164,40 L36,40Z", "#F2DCC0") + shelves, s=None, ol=ol, k=.9)
+    o += part(rr(20, 8, 160, 14, 6), lt(wood, .15), s=None, ol=ol)
+    return o
+
+
+@place
+def sink():
+    top, cab, ol = "#E9EEF6", "#8FD0C0", "#5E9E90"
+    o = ground(100, 193, 96, 7)
+    o += K.hose("M100,40 L100,14 C100,4 120,2 122,14 L122,20", "#C9D2E0", 8 * U, ol="#7E869A")
+    o += part(rr(92, 36, 16, 8, 3), "#C9D2E0", s=None, ol="#7E869A")
+    o += part(drop_d(122, 26, .6), "#7FD0FF", s=None, ol="#4F9AD0", k=.7)
+    o += part(poly([(4, 64), (196, 64), (190, 40), (10, 40)]), top, s=None, ol="#8E96B8")
+    o += part(rr(40, 42, 120, 22, 10), "#B7C6DE", s=None, ol="#7E8CB0")
+    o += part(rr(46, 46, 108, 16, 8), "#D6E6F7", s=None, ol=False)
+    for x, y, r in ((70, 50, 5), (82, 47, 4), (126, 52, 4.5)):
+        o += part(ell(x, y, r), "#FFFFFF", s=None, ol="#8EC6E8", k=.6)
+    o += part(rr(2, 62, 196, 14, 5), top, s=S(2, 3), ol="#8E96B8")
+    o += part(rr(10, 74, 180, 116, 6), cab, s=S(7, 8), ol=ol)
+    for x in (18, 104):
+        o += part(rr(x, 84, 78, 96, 6), lt(cab, .2), s=None, ol=ol, k=.8)
+    o += part(rr(84, 118, 6, 22, 3), "#FFFFFF", s=None, ol=ol, k=.8) + part(rr(110, 118, 6, 22, 3), "#FFFFFF", s=None, ol=ol, k=.8)
+    o += part(rr(150, 36, 24, 12, 4), "#FFD43B", s=None) + part(rr(150, 30, 24, 7, 3), "#4FC461", s=None)
+    return o
+
+
+# ---------------------------------------------------------------- 大自然
+@place
+def sky():
+    blue = "#7CC8FF"
+    rim = _scallop_rect(6, 62, 188, 80, 14)
+    o = part(rim, "#FFFFFF", s=None, ol="#9CC9EC")
+    patch = rr(16, 70, 168, 64, 26)
+    o += comp(patch, blue, flat(rr(16, 110, 168, 30, 0), lt(blue, .25)) + flat(ell(160, 82, 24), "#FFE27A", .45),
+              s=None, ol="#5AA6E0")
+    o += part(ell(160, 88, 13), YELLOW, s=S(2, 2.5), ol=lin(YELLOW))
+    for a in range(0, 360, 45):
+        o += g(ln("M0,-18 L0,-23", "#F2B91E", 1.1), f"translate(160 88) rotate({a})")
+    o += part(cloud_d(64, 102, .62), "#FFFFFF", s=S(3, 3.5), ol="#9CC9EC")
+    o += part(cloud_d(118, 116, .34), "#FFFFFF", s=None, ol="#9CC9EC", k=.8)
+    return o
+
+
+def _scallop_rect(x, y, w, h, bump):
+    """A rounded rectangle with a puffy (cloud) edge."""
+    pts = []
+    k = 14
+    cx, cy, rx, ry = x + w / 2, y + h / 2, w / 2 - bump * .6, h / 2 - bump * .6
+    for i in range(k * 2):
+        t = 2 * math.pi * i / (k * 2)
+        c, s_ = math.cos(t), math.sin(t)
+        # a superellipse so the shape stays wide and flat
+        px = cx + rx * math.copysign(abs(c) ** .45, c)
+        py = cy + ry * math.copysign(abs(s_) ** .45, s_)
+        pts.append((px, py))
+    d = f"M{n(pts[0][0])},{n(pts[0][1])}"
+    for i in range(len(pts)):
+        a, b = pts[i], pts[(i + 1) % len(pts)]
+        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+        nx, ny = mx - cx, my - cy
+        l_ = math.hypot(nx / rx, ny / ry) or 1
+        nn = math.hypot(nx, ny) or 1
+        d += f" Q{n(mx + nx / nn * bump * 1.6)},{n(my + ny / nn * bump * 1.6)} {n(b[0])},{n(b[1])}"
+    return d + "Z"
+
+
+@place
+def tree():
+    trunk, leaf, ol = "#A8693D", "#5DBB63", "#3E8A44"
+    o = ground(96, 193, 46, 6)
+    o += part("M88,196 C92,170 90,140 88,110 L108,110 C106,140 104,170 112,196 C104,198 94,198 88,196Z", trunk, s=S(4, 5))
+    o += part("M90,134 C70,128 46,126 20,128 C14,128 12,138 18,140 C44,140 68,142 90,148Z", trunk, s=S(3, 4))
+    o += part("M106,118 C126,110 150,104 178,104 C184,104 186,114 180,116 C154,118 130,124 106,132Z", trunk, s=S(3, 4))
+    o += part(ell(98, 162, 7, 10), "#5A3420", s=None, ol=lin(trunk))
+    for cx, cy, r in ((14, 126, 12), (186, 102, 12)):
+        o += part(ell(cx, cy, r), leaf, s=S(2, 3), ol=ol)
+    blobs = [(54, 72, 34, leaf), (146, 70, 34, leaf), (100, 40, 40, lt(leaf, .12)), (70, 34, 26, lt(leaf, .12)),
+             (132, 34, 26, lt(leaf, .12)), (100, 88, 36, shd(leaf))]
+    for cx, cy, r, c in blobs:
+        o += part(ell(cx, cy, r), c, s=S(5, 6), ol=ol)
+    for x, y in ((80, 50), (120, 62), (60, 80), (140, 84), (100, 22)):
+        o += part(ell(x, y, 4), RED, s=None, ol="#A8262A", k=.7)
+    o += part("M78,196 C82,186 86,186 88,190 C90,182 96,182 98,192 C100,184 108,186 110,192 L114,196Z", "#7ED957", s=None, ol=ol)
+    return o
+
+
+@place
+def grass():
+    gr, ol, wood = "#7ED957", "#4E9A34", "#E0A866"
+    o = ""
+    for x in range(22, 186, 32):
+        o += part(f"M{x - 5},112 L{x - 5},68 L{x},60 L{x + 5},68 L{x + 5},112Z", wood, s=S(2, 2.5), ol=lin(wood))
+    o += part(rr(12, 74, 176, 8, 3), wood, s=None, ol=lin(wood)) + part(rr(12, 94, 176, 8, 3), wood, s=None, ol=lin(wood))
+    mound = "M6,150 C6,112 40,98 100,98 C160,98 194,112 194,150 C194,166 170,174 100,174 C30,174 6,166 6,150Z"
+    blades = "".join(flat(f"M{x - 4},178 L{x},160 L{x + 4},178Z", shd(gr)) for x in range(8, 196, 10))
+    o += comp(mound, gr, flat(ell(100, 108, 80, 12), lt(gr, .3)) + blades, s=S(6, 7), ol=ol, hl=H("M30,118 C50,108 80,104 110,104", 4, .6))
+    for x, y in ((40, 128), (150, 124), (96, 140), (126, 152), (64, 150)):
+        o += g(ln("M0,8 L0,0 M-4,8 L-6,2 M4,8 L6,2", "#3E8A2C", .8), f"translate({x} {y})")
+    for x, y, c in ((52, 122, "#FFFFFF"), (140, 118, YELLOW), (110, 132, PINK), (76, 144, YELLOW), (160, 140, "#FFFFFF")):
+        o += part(star_d(5, 2.6, n_=5, cx=x, cy=y, round_=.3), c, s=None, ol=lin(c) if c != "#FFFFFF" else "#C9C2DD", k=.6)
+        o += flat(ell(x, y, 1.6), "#FFB020")
+    return o
+
+
+@place
+def sea():
+    top, deep = "#4FB4F5", "#2E86D8"
+    waves = "M0,80 " + " ".join(f"Q{x + 10},{68} {x + 20},{80}" for x in range(0, 200, 20))
+    body = waves + " L200,147 L0,147Z"
+    inner = flat("M0,110 L200,110 L200,150 L0,150Z", lg([(0, top), (1, deep)]))
+    inner += "".join(flat(f"M{x},86 Q{x + 10},80 {x + 20},86", "none") for x in range(0, 200, 40))
+    o = comp(body, top, inner, s=None, ol="#2A78C0")
+    o += ln("M" + " ".join(f"{x},{88 if (x // 10) % 2 else 84}" for x in range(4, 200, 10)), "#FFFFFF", 1.4, op=.0)
+    for x in range(0, 200, 20):
+        o += flat(f"M{x + 2},79 Q{x + 10},70 {x + 18},79 Q{x + 10},75 {x + 2},79Z", "#FFFFFF", .9)
+    for x, y, r in ((30, 120, 4), (36, 108, 2.5), (150, 128, 3.5), (156, 116, 2.4), (96, 134, 3)):
+        o += part(ell(x, y, r), "#DFF4FF", s=None, ol="#8EC6E8", k=.8)
+    for x in (12, 184):
+        o += part(tube([(x, 148, 3.5), (x - 4, 132, 3), (x + 3, 118, 2.6), (x - 1, 106, 2)], 6), "#3FAE6A", s=None, ol="#2E7A4A")
+    o += part("M64,148 C64,138 78,132 90,136 C98,132 110,136 112,148Z", "#9A8FB0", s=S(2, 2), ol="#6E6488")
+    return o
+
+
+# ---------------------------------------------------------------- 超市
+def _awning(col, y=44, h=30):
+    o = ""
+    for i, x in enumerate(range(10, 190, 20)):
+        c = col if i % 2 == 0 else "#FFFFFF"
+        o += part(f"M{x},{y} L{x + 20},{y} L{x + 20},{y + h - 8} Q{x + 10},{y + h + 4} {x},{y + h - 8}Z", c, s=None,
+                  ol=lin(col), k=.8)
+    o += part(rr(6, y - 8, 188, 12, 5), shd(col), s=None, ol=lin(col))
+    return o
+
+
+def _sign(icon, col):
+    o = part(rr(60, 2, 80, 38, 12), "#FFFFFF", s=S(3, 4), ol=lin(col))
+    o += ln("M80,40 L80,36 M120,40 L120,36", lin(col), .8)
+    return o + icon
+
+
+def _stand_base(col):
+    wood = "#D9A066"
+    o = ground(100, 193, 90, 7)
+    for x in (22, 178):
+        o += part(rr(x - 4, 70, 8, 64, 3), wood, s=None, ol=lin(wood))
+    o += part(rr(10, 128, 180, 62, 8), wood, s=S(6, 7), ol=lin(wood), hl=H("M20,140 L180,140", 3, .4))
+    o += ln("M10,150 L190,150 M10,170 L190,170", shd(wood), .7)
+    o += part(rr(18, 186, 14, 9, 3), shd(wood), s=None) + part(rr(168, 186, 14, 9, 3), shd(wood), s=None)
+    o += part(rr(6, 122, 188, 10, 4), lt(wood, .2), s=None, ol=lin(wood))
+    return o
+
+
+def _crate(x, y, w, h, fill=""):
+    wood = "#E8B57A"
+    o = fill
+    o += part(rr(x, y, w, h, 3), wood, s=S(2, 3), ol=lin(wood))
+    o += ln(f"M{x + 3},{y + h / 2} L{x + w - 3},{y + h / 2}", shd(wood), .6)
+    return o
+
+
+def _ball_pile(x, y, w, col, r, rows=2):
+    o = ""
+    for j in range(rows):
+        k = int(w // (2 * r))
+        for i in range(k - j):
+            cx = x + r + j * r + i * 2 * r + (w - k * 2 * r) / 2
+            cy = y - j * r * 1.5
+            o += part(ell(cx, cy, r), col, s=S(1.5, 2), ol=lin(col), k=.7, hl=hidot(cx - r * .35, cy - r * .35, r * .25))
+    return o
+
+
+def _grapes_icon(cx, cy, s=1.0, col=PURPLE):
+    o = part(f"M{n(cx)},{n(cy - 16 * s)} L{n(cx + 3 * s)},{n(cy - 24 * s)}", "none", s=None, ol=False)
+    for dx, dy in ((-8, -8), (0, -8), (8, -8), (-4, 0), (4, 0), (0, 8)):
+        o += part(ell(cx + dx * s, cy + dy * s, 5 * s), col, s=None, ol=lin(col), k=.6)
+    o += part(f"M{n(cx)},{n(cy - 13 * s)} C{n(cx + 4 * s)},{n(cy - 20 * s)} {n(cx + 12 * s)},{n(cy - 20 * s)} {n(cx + 14 * s)},{n(cy - 16 * s)} "
+              f"C{n(cx + 10 * s)},{n(cy - 11 * s)} {n(cx + 4 * s)},{n(cy - 11 * s)} {n(cx)},{n(cy - 13 * s)}Z", GREEN, s=None, ol=lin(GREEN), k=.6)
+    return o
+
+
+def _strawberry(cx, cy, s=1.0):
+    d = (f"M{n(cx)},{n(cy - 10 * s)} C{n(cx + 12 * s)},{n(cy - 12 * s)} {n(cx + 14 * s)},{n(cy)} {n(cx + 8 * s)},{n(cy + 8 * s)} "
+         f"C{n(cx + 4 * s)},{n(cy + 13 * s)} {n(cx - 4 * s)},{n(cy + 13 * s)} {n(cx - 8 * s)},{n(cy + 8 * s)} "
+         f"C{n(cx - 14 * s)},{n(cy)} {n(cx - 12 * s)},{n(cy - 12 * s)} {n(cx)},{n(cy - 10 * s)}Z")
+    o = part(d, "#F0394F", s=None, ol=lin("#F0394F"), k=.7)
+    o += "".join(flat(ell(cx + dx * s, cy + dy * s, 1.1 * s, 1.5 * s), "#FFE48A") for dx, dy in ((-4, -2), (4, -1), (0, 4), (-5, 5), (5, 6)))
+    o += part(star_d(7 * s, 3 * s, n_=5, cx=cx, cy=cy - 11 * s, round_=.2), GREEN, s=None, ol=lin(GREEN), k=.6)
+    return o
+
+
+@place
+def fruit_stand():
+    awn = "#F2463F"
+    o = _stand_base(awn)
+    o += _crate(16, 104, 54, 24, _ball_pile(18, 100, 50, "#FF9A1F", 8.5))
+    o += _crate(73, 104, 54, 24)
+    o += _crate(130, 104, 54, 24, "".join(_grapes_icon(x, 92, 1.0) for x in (144, 168)))
+    o += _awning(awn)
+    o += _sign(_strawberry(100, 22, 1.3), awn)
+    return o
+
+
+def _croissant(cx, cy, s=1.0, rot=0):
+    col = "#E8A04C"
+    o = ""
+    for i, (dx, rw, rh) in enumerate(((-15, 8, 7), (15, 8, 7), (-8, 10, 9), (8, 10, 9), (0, 12, 11))):
+        o += part(ell(dx, -abs(dx) * .1, rw, rh), col if i < 4 else lt(col, .1), s=(-1.5, -2), ol=lin(col), k=.7)
+    return g(o, f"translate({n(cx)} {n(cy)}) rotate({rot}) scale({s})")
+
+
+@place
+def bakery():
+    awn = "#FF9A3D"
+    o = _stand_base(awn)
+    o += _crate(16, 104, 54, 24, _croissant(36, 98, 1.0, -8) + _croissant(52, 100, .9, 10))
+    o += _crate(73, 104, 54, 24)
+    bag = part("M134,104 L146,62 L164,62 L176,104Z", "#F3E2BE", s=None, ol="#C9A77A", k=.8)
+    bag += part("M144,66 C140,58 146,48 154,50 C160,52 164,60 160,70 L152,96 C150,100 146,100 146,96Z", "#E39A4C", s=None, ol=lin("#E39A4C"), k=.8)
+    bag += part("M156,70 C156,60 164,52 172,56 C176,60 174,70 170,76 L160,98 C158,102 154,100 154,96Z", "#D98E46", s=None, ol=lin("#E39A4C"), k=.8)
+    o += _crate(130, 104, 54, 24, bag)
+    o += _awning(awn)
+    o += _sign(_croissant(100, 24, 1.15), awn)
+    return o
+
+
+def _broccoli(cx, cy, s=1.0):
+    o = part(f"M{n(cx - 4 * s)},{n(cy)} L{n(cx + 4 * s)},{n(cy)} L{n(cx + 5 * s)},{n(cy + 14 * s)} L{n(cx - 5 * s)},{n(cy + 14 * s)}Z",
+             "#9BD46A", s=None, ol="#4E9A34", k=.6)
+    for dx, dy, r in ((-8, -2, 7), (8, -2, 7), (0, -8, 8), (-3, 0, 6), (4, 1, 6)):
+        o += part(ell(cx + dx * s, cy + dy * s, r * s), "#3FAE4A", s=None, ol="#2E7A34", k=.6)
+    return o
+
+
+def _eggplant(cx, cy, s=1.0, rot=0):
+    o = part("M-14,0 C-14,-10 -6,-14 0,-12 C10,-10 22,-6 24,4 C26,14 14,18 4,14 C-4,12 -14,10 -14,0Z", "#8E4FD8", s=(-1.5, -2), k=.7)
+    o += part("M-14,-2 L-20,-8 L-12,-10 L-8,-14 L-6,-6Z", GREEN, s=None, k=.6)
+    return g(o, f"translate({n(cx)} {n(cy)}) rotate({rot}) scale({s})")
+
+
+def _corn(cx, cy, s=1.0, rot=0):
+    o = part("M-6,-18 C-6,-24 6,-24 6,-18 L6,14 C6,20 -6,20 -6,14Z", YELLOW, s=None, k=.7)
+    o += part("M-6,18 C-14,8 -14,-6 -10,-14 C-6,-4 -4,8 0,20Z", GREEN, s=None, k=.6)
+    o += part("M6,18 C14,8 14,-6 10,-14 C6,-4 4,8 0,20Z", GREEN, s=None, k=.6)
+    return g(o, f"translate({n(cx)} {n(cy)}) rotate({rot}) scale({s})")
+
+
+@place
+def veggie_stand():
+    awn = "#3FB55A"
+    o = _stand_base(awn)
+    o += _crate(16, 104, 54, 24, _broccoli(30, 96, 1.1) + _broccoli(54, 98, 1.0))
+    o += _crate(73, 104, 54, 24)
+    o += _crate(130, 104, 54, 24, _eggplant(146, 98, .9, -20) + _corn(170, 92, 1.0, 14))
+    o += _awning(awn)
+    o += _sign(_broccoli(100, 22, 1.25), awn)
+    return o
+
+
+@place
+def frozen_case():
+    body, ol, ice = "#DCEFFF", "#5E86C0", "#B9DDF8"
+    o = ground(100, 193, 92, 7)
+    o += part(rr(20, 184, 14, 10, 3), "#6E6880", s=None) + part(rr(166, 184, 14, 10, 3), "#6E6880", s=None)
+    inside = poly([(10, 104), (190, 104), (176, 76), (24, 76)])
+    stuff = flat("M20,82 C40,74 60,86 80,78 C100,86 130,74 150,82 C164,76 176,84 182,80 L184,92 L16,92Z", "#FFFFFF", .9)
+    for x, y, c in ((44, 92, "#FF8FB1"), (70, 96, "#FFD43B"), (126, 94, "#7ED957"), (150, 92, "#FF8FB1")):
+        stuff += part(rr(x - 10, y - 8, 20, 14, 3), c, s=None, ol=lin(c), k=.6) + flat(rr(x - 6, y - 5, 12, 4, 2), "#FFFFFF", .8)
+    o += comp(inside, ice, stuff, s=None, ol=ol)
+    o += part(poly([(30, 76), (100, 76), (98, 66), (36, 66)]), "#EAF6FF", s=None, ol=ol, op=.85)
+    front = rr(6, 102, 188, 90, 14)
+    frost = flat(blob([(0, 150), (16, 140), (30, 150), (24, 176), (0, 196)]), "#FFFFFF", .85)
+    frost += flat(blob([(200, 116), (184, 112), (172, 120), (180, 140), (200, 146)]), "#FFFFFF", .85)
+    o += comp(front, body, frost + flat(rr(6, 102, 188, 14, 0), lt(body, .4)), s=S(7, 8), ol=ol)
+    for a in (0, 60, 120):
+        o += g(ln("M0,-16 L0,16 M-5,-11 L0,-6 L5,-11 M-5,11 L0,6 L5,11", "#5A86D6", 1.0), f"translate(100 150) rotate({a})")
+    o += part(rr(60, 2, 80, 38, 12), "#FFFFFF", s=S(3, 4), ol=ol)
+    for a in (0, 60, 120):
+        o += g(ln("M0,-13 L0,13 M-4,-9 L0,-5 L4,-9 M-4,9 L0,5 L4,9", "#3D8BF2", 1.0), f"translate(100 21) rotate({a})")
+    o += part(rr(96, 40, 8, 26, 3), "#C9D2E0", s=None, ol=ol, k=.8)
+    o += sparkle(170, 64, 7, "#FFFFFF") + sparkle(28, 60, 5, "#FFFFFF")
+    return o
+
+
+# ---------------------------------------------------------------- 資源回收
+BINS = {
+    "bin_paper": "#3D8BF2",
+    "bin_bottle": "#FFC233",
+    "bin_can": "#F2463F",
+    "bin_food": "#4FC461",
+    "bin_trash": "#9A94B0",
+}
+
+
+def _bin(col, icon):
+    o = ground(100, 193, 64, 6)
+    o += part(poly([(40, 66), (160, 66), (152, 24), (48, 24)]), shd(col), s=None, ol=lin(col))
+    o += ln("M58,34 L142,34", lin(col), .6)
+    o += part(rr(28, 60, 144, 18, 9), "#3A3150", s=None, ol=lin(col))
+    o += part("M24,74 L176,74 L174,84 L26,84Z", lt(col, .25), s=None, ol=lin(col))
+    body = "M30,82 L170,82 L158,180 C157,187 152,190 146,190 L54,190 C48,190 43,187 42,180Z"
+    o += part(body, col, s=S(8, 9), hl=H("M44,98 L52,170", 6, .5))
+    for x in (56, 144):
+        o += part(ell(x, 188, 9), "#4B4560", s=None, ol="#2A2436") + part(ell(x, 188, 3.5), "#C9C4D6", s=None, ol=False)
+    o += part(ell(100, 132, 36), "#FFFFFF", s=S(2, 3), ol=lin(col))
+    return o + icon
+
+
+def _icon_paper(c):
+    o = part("M84,110 L108,110 L118,120 L118,154 L84,154Z", "#FFFFFF", s=None, ol=c)
+    o += part("M108,110 L108,120 L118,120Z", lt(c, .6), s=None, ol=c, k=.8)
+    o += ln("M90,126 L110,126 M90,134 L112,134 M90,142 L106,142", c, .8)
+    return o
+
+
+def _icon_bottle(c):
+    return (part("M95,108 L105,108 L105,114 C114,118 116,124 116,130 L116,154 C116,158 113,160 110,160 L90,160 C87,160 84,158 84,154 "
+                 "L84,130 C84,124 86,118 95,114Z", lt(c, .75), s=None, ol=c)
+            + part(rr(93, 104, 14, 7, 2), c, s=None, ol=c) + ln("M86,136 L114,136 M86,146 L114,146", c, .7))
+
+
+def _icon_can(c):
+    o = part(rr(86, 112, 28, 42, 5), lt(c, .7), s=None, ol=c)
+    o += part(ell(100, 114, 14, 4), "#FFFFFF", s=None, ol=c, k=.8) + ln("M86,124 L114,124 M86,144 L114,144", c, .7)
+    o += part(rr(96, 107, 10, 5, 2), "#FFFFFF", s=None, ol=c, k=.7)
+    return o
+
+
+def _icon_food(c):
+    core = ("M92,116 C84,118 82,126 88,130 C84,136 84,144 90,148 C84,152 86,160 96,160 L104,160 C114,160 116,152 110,148 "
+            "C116,144 116,136 112,130 C118,126 116,118 108,116Z")
+    o = part(core, "#FFF3C8", s=None, ol=c)
+    o += part("M92,116 C96,120 104,120 108,116 C104,112 96,112 92,116Z", "#F2463F", s=None, ol="#A8262A", k=.7)
+    o += part("M92,160 C96,156 104,156 108,160 C104,164 96,164 92,160Z", "#F2463F", s=None, ol="#A8262A", k=.7)
+    o += ln("M100,114 L102,104", "#6B4A26", 1.0)
+    o += part("M102,108 C106,100 114,100 116,104 C112,108 106,110 102,108Z", GREEN, s=None, ol=lin(GREEN), k=.7)
+    o += flat(ell(97, 138, 1.6, 2.6), "#6B4A26") + flat(ell(103, 138, 1.6, 2.6), "#6B4A26")
+    return o
+
+
+def _icon_trash(c):
+    ball_ = blob([(82, 140), (86, 122), (100, 114), (114, 120), (120, 136), (114, 152), (98, 158), (86, 152)])
+    o = part(ball_, "#FFFFFF", s=None, ol=c)
+    o += ln("M88,130 L98,136 L102,124 M104,140 L114,134 M92,148 L102,142 L106,152", c, .7)
+    return o
+
+
+@place
+def bin_paper():
+    c = BINS["bin_paper"]
+    return _bin(c, _icon_paper(lin(c)))
+
+
+@place
+def bin_bottle():
+    c = BINS["bin_bottle"]
+    return _bin(c, _icon_bottle(lin(c)))
+
+
+@place
+def bin_can():
+    c = BINS["bin_can"]
+    return _bin(c, _icon_can(lin(c)))
+
+
+@place
+def bin_food():
+    c = BINS["bin_food"]
+    return _bin(c, _icon_food(lin(c)))
+
+
+@place
+def bin_trash():
+    c = BINS["bin_trash"]
+    return _bin(c, _icon_trash(dk(c, .3)))
+
+
 # ================================================================ WRITING
 def write_things(only=None):
     sizes = {}
@@ -725,6 +1382,26 @@ def write_things(only=None):
             continue
         K.begin(K.OL_THING)
         sizes[name] = save(name, fit(fn, box))
+    return sizes
+
+
+def write_places(only=None):
+    global U
+    where = read_places()
+    missing = set(where) ^ set(PLACES)
+    if missing:
+        raise SystemExit(f"places in content.dart and here differ: {sorted(missing)}")
+    sizes = {}
+    for name, fn in PLACES.items():
+        if only and name not in only:
+            continue
+        shown = where[name][3] * K.SCENE_W
+        K.begin(K.ol_for(shown))
+        U = 140 / shown
+        try:
+            sizes[name] = save(name, fn())
+        finally:
+            U = 1.0
     return sizes
 
 
@@ -780,6 +1457,7 @@ def main(argv):
         render_html(page(body, 16 + cols * (cell + 12), h + 10), out, 16 + cols * (cell + 12), h + 10)
         return
     sizes = write_things()
+    sizes.update(write_places())
     big = max(sizes.items(), key=lambda kv: kv[1])
     print(f"{len(sizes)} pictures written to {K.OUT} (largest {big[0]} {big[1]:.1f} KB)")
 

@@ -37,9 +37,9 @@ ROOT = HERE.parents[1]
 
 # ---------------------------------------------------------------- sizes
 OL_PEOPLE = 3.6     # outline of the owners (units of the 200 picture): they show 90-190 px wide
-PS = .7             # every grown-up is drawn at this scale (person units -> picture units)
-GY = 190            # the ground line of every owner picture: feet / bottoms stand here
-FOOT = 106          # the ground line in person units
+PS = .72            # every grown-up is drawn at this scale (person units -> picture units)
+GY = 192            # the ground line of every owner picture: feet / bottoms stand here
+FOOT = 107          # the ground line in person units
 
 PUPIL = "#2E1C14"
 EYE_OL = "#3A2A30"
@@ -196,7 +196,8 @@ def doctor():
     scrub = "#7ED3E6"
     inner = part("M-15,-22 L0,8 L15,-22 Z", scrub, s=None, ol=lin(scrub))
     inner += ln("M-15,-21 L-3,10 L-3,74", WHITE_OL, .8) + ln("M15,-21 L3,10", WHITE_OL, .8)
-    inner += part(rr(16, 22, 18, 14, 3), "#F3F0FA", s=None, ol=WHITE_OL)            # pocket
+    inner += part(rr(14, 20, 22, 18, 3), "#F3F0FA", s=None, ol=WHITE_OL)            # pocket with a plus
+    inner += part("M23,23 h4 v4.5 h4.5 v4 h-4.5 v4.5 h-4 v-4.5 h-4.5 v-4 h4.5 Z", "#2EC4B6", s=None, ol=False)
     inner += part(rr(-34, 40, 18, 14, 3), "#F3F0FA", s=None, ol=WHITE_OL)
     inner += part(ell(-8, 26, 2.6), "#D6D0E6", s=None, ol=WHITE_OL, k=.5) + part(ell(-8, 46, 2.6), "#D6D0E6", s=None, ol=WHITE_OL, k=.5)
     return person(skin, coat, "#5A86D6", shoe="#3B3446", top_ol=WHITE_OL, inner=inner, length=74, flare=5,
@@ -240,10 +241,10 @@ def clipped_checks(checks, pants):
 
 
 def toque():
-    puff = ("M-32,-104 C-58,-106 -62,-138 -40,-146 C-38,-166 -14,-170 0,-158 C14,-170 38,-166 40,-146 "
-            "C62,-138 58,-106 32,-104 Z")
-    o = part(puff, "#FFFFFF", s=(-6, -7), ol=WHITE_OL, sh="#E1DCF0", hl=hi("M-40,-132 C-40,-142 -34,-148 -26,-150", 4, .9))
-    o += ln("M-14,-108 C-16,-124 -14,-140 -10,-150 M14,-108 C16,-124 14,-140 10,-150", WHITE_OL, .6)
+    puff = ("M-32,-104 C-58,-106 -60,-130 -40,-136 C-38,-152 -14,-156 0,-146 C14,-156 38,-152 40,-136 "
+            "C60,-130 58,-106 32,-104 Z")
+    o = part(puff, "#FFFFFF", s=(-6, -7), ol=WHITE_OL, sh="#E1DCF0", hl=hi("M-42,-122 C-42,-130 -36,-136 -28,-138", 4, .9))
+    o += ln("M-14,-108 C-16,-120 -14,-132 -10,-140 M14,-108 C16,-120 14,-132 10,-140", WHITE_OL, .6)
     o += part(rr(-36, -110, 72, 18, 6), "#FFFFFF", s=(-3, -3), ol=WHITE_OL, sh="#E1DCF0")
     return o
 
@@ -349,10 +350,10 @@ def grandpa():
         inner += part(rr(sx * 26 - 10, 30, 20, 16, 3), shd(card), s=None, ol=lin(card))
     inner += part(rr(-60, 50, 120, 6, 0), shd(card), s=None, ol=False)
     grey = "#D9D6E0"
-    tufts = (part("M-44,-50 C-50,-62 -48,-80 -36,-88 C-38,-76 -36,-66 -32,-58 Z", grey, s=None, ol="#9C97AE")
-             + part("M44,-50 C50,-62 48,-80 36,-88 C38,-76 36,-66 32,-58 Z", grey, s=None, ol="#9C97AE")
-             + part("M-24,-96 C-18,-106 0,-108 10,-104 C4,-100 -6,-100 -12,-96 C-6,-98 4,-96 8,-92 C-4,-94 -16,-92 -24,-96Z",
-                    grey, s=None, ol="#9C97AE"))
+    capd = ("M-43,-54 C-50,-90 -24,-110 2,-109 C30,-108 50,-90 43,-54 C41,-66 38,-76 32,-84 "
+            "C22,-90 10,-94 -2,-94 C-14,-94 -26,-90 -32,-84 C-38,-76 -41,-66 -43,-54Z")
+    tufts = part(capd, grey, s=(-3, -4), sh="#BDB8C9", ol="#9C97AE", hl=hi("M-22,-100 C-12,-105 0,-106 10,-105", 3.5, .8))
+    tufts += ln("M-20,-100 C-10,-96 0,-96 8,-100 M-6,-106 C2,-100 12,-100 22,-104", "#AFA9C0", .6)
     stache = part("M0,-46 C-4,-51 -14,-52 -17,-46 C-18,-42 -12,-41 -9,-43 C-6,-45 -2,-45 0,-43 C2,-45 6,-45 9,-43 "
                   "C12,-41 18,-42 17,-46 C14,-52 4,-51 0,-46Z", grey, s=None, ol="#9C97AE")
     o = person(skin, card, "#8C7B6B", shoe="#6E4A32", inner=inner, cuff=shd(card), hair_front=tufts,
@@ -415,10 +416,12 @@ def hairdresser():
     a = "M-26,-14 L26,-14 L28,10 L36,14 L38,70 Q38,74 34,74 L-34,74 Q-38,74 -38,70 L-36,14 L-28,10 Z"
     over = ln("M-24,-14 C-24,-22 -20,-26 -16,-30 M24,-14 C24,-22 20,-26 16,-30", apron, 1.6)
     over += part(a, apron, s=(-5, -6), hl=hi("M-30,20 L-30,60", 3, .25))
+    over += g(combd(0, 0, 0, "#FFD43B"), "translate(-20 33) rotate(-80) scale(.55)")
+    over += part(rr(-28, 28, 10, 16, 2), "#C9CED9", s=None)
     for sx in (-1, 1):
         over += part(rr(sx * 18 - 13, 34, 26, 22, 4), lt(apron, .12), s=None, ol=lin(apron))
     over += ln("M0,34 L0,56", lin(apron), .7)
-    comb = combd(50, -86, -52)
+    comb = combd(46, -86, -40, "#FF7FA3")
     hair = ("M-43,-56 C-48,-90 -26,-108 -2,-108 C10,-122 40,-118 46,-98 C50,-86 46,-70 43,-56 C40,-68 34,-78 22,-84 "
             "C10,-78 -14,-80 -26,-86 C-34,-78 -40,-68 -43,-56Z")
     hfront = part(hair, "#3A2626", s=(-3, -4), hl=hi("M-18,-100 C-6,-106 6,-110 18,-110", 4, .45))
@@ -427,10 +430,10 @@ def hairdresser():
 
 
 def combd(cx, cy, rot, col="#2EC4B6"):
-    """A comb (behind the ear), centred on (cx, cy), turned rot degrees."""
-    back = rr(-22, -6, 44, 9, 4)
-    teeth = "".join(rr(-20 + i * 5.2, 1, 3.2, 12, 1.4) for i in range(8))
-    o = part(teeth, col, s=None, ol=lin(col), k=.7) + part(back, col, s=None, ol=lin(col), hl=hi("M-17,-3 L14,-3", 2, .6))
+    """A comb (behind the ear), centred on (cx, cy), turned rot degrees: a bar and seven fat teeth."""
+    back = rr(-26, -8, 52, 11, 5)
+    teeth = "".join(rr(-23 + i * 7.2, 0, 4.4, 15, 2.2) for i in range(7))
+    o = part(teeth, col, s=None, ol=lin(col), k=.7) + part(back, col, s=None, ol=lin(col), hl=hi("M-20,-4 L18,-4", 2.2, .7))
     return g(o, f"translate({cx} {cy}) rotate({rot})")
 
 
@@ -499,7 +502,8 @@ def baby():
     for sx in (-1, 1):
         o += part(ell(sx * 46, -58, 8, 10), skin, s=None, ol=sko)
     o += part(ell(0, -62, 47, 44), skin, s=(-7, -8), ol=sko)
-    o += ln("M-2,-105 C-10,-118 8,-124 10,-114 C11,-108 5,-105 2,-109", "#7A5236", 1.5)
+    curl = "M-12,-102 C-14,-114 -2,-124 8,-118 C14,-114 12,-104 4,-104 C0,-104 -2,-110 2,-112 C-4,-112 -6,-104 -4,-100 Z"
+    o += part(curl, "#8A5A3A", s=None)
     o += eye(-17, -58, 9.5, 11.5, .5, 1.5, pc=PUPIL, ol=EYE_OL) + eye(17, -58, 9.5, 11.5, .5, 1.5, pc=PUPIL, ol=EYE_OL)
     o += blush(-30, -42, 8, 5, op=.6) + blush(30, -42, 8, 5, op=.6)
     o += open_mouth(0, -38, 13, col="#8A2F2F", ol=MOUTH)
@@ -540,16 +544,16 @@ def rabbit():
     pink = "#FFB3C4"
     o = ""
     for sx in (-1, 1):
-        ear = f"M{sx * 10},-80 C{sx * 2},-120 {sx * 6},-160 {sx * 22},-164 C{sx * 38},-164 {sx * 40},-120 {sx * 28},-78 Z"
+        ear = f"M{sx * 8},-78 C{sx * 0},-110 {sx * 4},-138 {sx * 22},-142 C{sx * 40},-142 {sx * 40},-110 {sx * 30},-76 Z"
         o += part(ear, fur, s=(-3, -4), sh=sh, ol=ol)
-        o += part(f"M{sx * 14},-86 C{sx * 10},-118 {sx * 14},-148 {sx * 22},-152 C{sx * 30},-150 {sx * 32},-118 {sx * 24},-86 Z", pink, s=None, ol=False)
+        o += part(f"M{sx * 13},-84 C{sx * 8},-110 {sx * 12},-128 {sx * 22},-131 C{sx * 32},-129 {sx * 32},-108 {sx * 25},-84 Z", pink, s=None, ol=False)
     body = "M-34,-14 C-52,10 -54,52 -42,72 C-34,84 34,84 42,72 C54,52 52,10 34,-14 Z"
     o += part(body, fur, s=(-7, -8), sh=sh, ol=ol)
     o += part(ell(0, 40, 22, 28), "#FFFFFF", s=None, ol=False)
     for sx in (-1, 1):
         o += part(ell(sx * 24, 76, 18, 10), fur, s=(-2, -3), sh=sh, ol=ol)
         o += flat(ell(sx * 24, 78, 8, 4.5), pink, op=.8)
-        o += part(tube([(sx * 22, 6, 8), (sx * 20, 24, 8)]), fur, s=(-2, -3), sh=sh, ol=ol)
+        o += part(ell(sx * 16, 14, 9, 11), fur, s=(-2, -2), sh=sh, ol=ol)
     head_d = ell(0, -44, 46, 40)
     o += part(head_d, fur, s=(-7, -8), sh=sh, ol=ol, hl=hi("M-28,-70 C-18,-78 -6,-82 6,-81", 5, .9))
     o += eye(-18, -48, 9, 10.5, .5, 1.5, pc=PUPIL, ol="#5A4A6A") + eye(18, -48, 9, 10.5, .5, 1.5, pc=PUPIL, ol="#5A4A6A")
@@ -605,10 +609,10 @@ OWNERS = {
     "sister": lambda: owner_picture(sister, foot=92, shadow=(42, 7)),
     "hairdresser": lambda: owner_picture(hairdresser),
     "painter": lambda: owner_picture(painter),
-    "baby": lambda: owner_picture(baby, s=.98, foot=60, shadow=(58, 8)),
-    "dog": lambda: owner_picture(dog, s=.9, foot=88, shadow=(56, 8)),
-    "rabbit": lambda: owner_picture(rabbit, s=.9, foot=86, shadow=(52, 8)),
-    "cat": lambda: owner_picture(cat, s=.9, foot=88, shadow=(56, 8)),
+    "baby": lambda: owner_picture(baby, s=.86, foot=60, shadow=(54, 8)),
+    "dog": lambda: owner_picture(dog, s=.82, foot=88, shadow=(52, 8)),
+    "rabbit": lambda: owner_picture(rabbit, s=.84, foot=86, shadow=(48, 8)),
+    "cat": lambda: owner_picture(cat, s=.82, foot=88, shadow=(52, 8)),
 }
 
 

@@ -397,7 +397,7 @@ def paper(d, col, shadow=1.0, grain=True, rough=1.0, op=None, evenodd=False, raw
     raw: use the colour as given (not muted)."""
     M = _STACK[-1]
     subs = [([_apply(M, p) for p in pts], closed) for pts, closed in _shape(d)]
-    LAYERS.append(dict(kind="fill", subs=subs, col=col if raw else mute(col), op=op, shadow=shadow,
+    LAYERS.append(dict(kind="fill", subs=subs, col=col if raw or col.startswith("url(") else mute(col), op=op, shadow=shadow,
                        grain=grain, rough=rough, evenodd=evenodd))
 
 

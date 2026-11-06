@@ -794,6 +794,8 @@ def EXTRA_JOBS():
     for kind in SPECIES:
         for w in WEARS:
             jobs[f"suspect_{kind}_{w}"] = (suspect_job(kind, w), {})
+    jobs["scene_meadow"] = (scene_job(scene_meadow), {})
+    jobs["scene_woods"] = (scene_job(scene_woods), {})
     return jobs
 
 
@@ -861,6 +863,162 @@ def pinecones():
     pinecone(-34, 34, .82, -64, needles=False, big=1.4)
     pinecone(36, 36, .82, 66, needles=False, big=1.4)
     pinecone(0, -12, .92, -8, big=1.3)
+
+
+# ================================================================ the two backgrounds (390 x 844)
+SW, SH = 390, 844
+
+
+def hill(y, amp, waves, phase, col, shadow=1.0, grain=True):
+    """A band of paper from a wavy top edge at about y down past the bottom of the scene."""
+    pts = []
+    for k in range(0, 41):
+        x = -30 + k * 450 / 40
+        yy = y + sum(a * math.sin(x / SW * math.pi * w + ph) for a, w, ph in zip(amp, waves, phase))
+        pts.append((x, yy))
+    top = spline(pts, 4)
+    paper(top + [(430, SH + 40), (-40, SH + 40)], col, shadow=shadow, grain=grain)
+
+
+def cloud(cx, cy, s, col="#FBF8EF"):
+    with tf(f"translate({cx} {cy}) scale({s})"):
+        paper("M-54,12 C-72,12 -74,-14 -56,-18 C-58,-42 -28,-50 -16,-36 C-8,-56 28,-56 34,-32 C52,-40 72,-24 62,-6 "
+              "C76,0 72,22 56,22 L-50,22 C-52,22 -53,17 -54,12 Z", col, shadow=.6)
+
+
+def small_flower(x, y, r, col, stem=True, a=0):
+    if stem:
+        line(f"M{x},{y} C{x - r * .3:.1f},{y + r * 1.6:.1f} {x + r * .3:.1f},{y + r * 2.6:.1f} {x},{y + r * 3.6:.1f}", "#7FAE68",
+             w=max(2, r * .28), shadow=.5)
+        with tf(f"translate({x} {y + r * 2.4:.1f}) rotate({-30 + a})"):
+            paper(ell(r * .55, 0, r * .6, r * .28), "#8DBA72", shadow=.5, grain=False)
+    with tf(f"translate({x} {y}) rotate({a})"):
+        for k in range(5):
+            with tf(f"rotate({k * 72})"):
+                paper(ell(0, -r * .55, r * .42, r * .55), col, shadow=.6, grain=False)
+        paper(ell(0, 0, r * .36), "#F6D77A", shadow=.4, grain=False)
+
+
+def grass(x, y, h, col="#86B86C", n=3, lean=0):
+    d = ""
+    for k in range(n):
+        bx = x + (k - (n - 1) / 2) * h * .22
+        tx = bx + (k - (n - 1) / 2) * h * .25 + lean
+        d += f"M{bx - h * .07:.1f},{y} Q{bx:.1f},{y - h * .5:.1f} {tx:.1f},{y - h:.1f} Q{bx + h * .04:.1f},{y - h * .45:.1f} {bx + h * .07:.1f},{y} Z "
+    paper(d, col, shadow=.5, grain=False)
+
+
+def round_tree(x, y, r, col, trunk="#B39073"):
+    paper(rr(x - r * .12, y - r * .2, r * .24, r * 1.1, r * .08), trunk, shadow=.6)
+    paper(blob([(x - r, y - r * .5), (x - r * .7, y - r * 1.3), (x, y - r * 1.75), (x + r * .75, y - r * 1.35), (x + r, y - r * .5),
+                (x + r * .5, y - r * .05), (x - r * .5, y - r * .05)]), col)
+
+
+def pine(x, y, h, col, trunk="#A88364"):
+    paper(rr(x - h * .05, y - h * .15, h * .1, h * .22, 2), trunk, shadow=.6)
+    for i, (f, w) in enumerate(((0, .42), (.28, .34), (.52, .25))):
+        yb = y - h * .1 - h * f
+        paper(f"M{x - h * w:.1f},{yb:.1f} L{x:.1f},{yb - h * .48:.1f} L{x + h * w:.1f},{yb:.1f} Q{x:.1f},{yb + h * .06:.1f} {x - h * w:.1f},{yb:.1f} Z",
+              mix(col, "#FFFFFF", i * .06))
+
+
+def mushroom(x, y, s, cap="#E58C7A"):
+    with tf(f"translate({x} {y}) scale({s})"):
+        paper(rr(-6, -14, 12, 16, 5), "#F6EBDA", shadow=.6)
+        paper("M-18,-12 C-18,-28 -8,-34 0,-34 C8,-34 18,-28 18,-12 C8,-9 -8,-9 -18,-12 Z", cap)
+        for dx, dy, r in ((-8, -22, 3), (5, -27, 2.4), (9, -17, 2.6)):
+            paper(ell(dx, dy, r), "#FBF4E8", shadow=0, grain=False)
+
+
+def bush(x, y, w, col):
+    paper(blob([(x - w, y), (x - w * .9, y - w * .45), (x - w * .45, y - w * .78), (x, y - w * .62), (x + w * .45, y - w * .86),
+                (x + w * .92, y - w * .42), (x + w, y)]), col)
+
+
+def scene_meadow():
+    sky = lgrad([(0, "#D5E6EC"), (.42, "#E8EEE2"), (.62, "#F1EEDC")], 0, 0, 0, SH)
+    paper(rr(-20, -20, SW + 40, SH + 40, 0), sky, shadow=0, rough=0)
+    paper(ell(318, 112, 38), "#FBE6A6", shadow=.5)
+    paper(ell(318, 112, 29), "#FCEDBE", shadow=0)
+    cloud(78, 168, .9)
+    cloud(286, 250, .75)
+    cloud(150, 330, .55, "#F7F4EA")
+    cloud(352, 372, .5, "#F7F4EA")
+    hill(436, (14, 8), (2.2, 5.0), (0.4, 1.3), "#CADBC2")
+    for x, s in ((56, .5), (82, .38), (300, .46), (330, .36), (196, .32)):
+        round_tree(x, 430 + 12 * math.sin(x / 50), 40 * s, "#B4CDA4")
+    hill(500, (16, 6), (1.6, 4.4), (2.1, .2), "#BCD5A6")
+    hill(600, (14, 7), (1.8, 3.6), (4.0, 2.2), "#AECD94")
+    hill(736, (12, 5), (2.4, 5.2), (1.0, 3.0), "#A1C487")
+    # flowers and grass at the edges (the middle stays calm for the cards and the line)
+    for x, y, r, c, a in ((14, 548, 9, "#F2B5C4", -8), (30, 590, 8, "#FBF4E6", 6), (8, 640, 10, "#F6DC8A", 0),
+                          (378, 560, 9, "#CDB8E6", 8), (366, 612, 8, "#F2B5C4", -6), (384, 668, 10, "#FBF4E6", 4),
+                          (18, 700, 11, "#CDB8E6", 0), (372, 724, 11, "#F6DC8A", -4),
+                          (40, 792, 12, "#F2B5C4", 6), (96, 812, 10, "#F6DC8A", -6), (300, 806, 11, "#FBF4E6", 0),
+                          (352, 788, 12, "#F2B5C4", 8), (196, 826, 9, "#CDB8E6", 0)):
+        small_flower(x, y, r, c, a=a)
+    for x, y, h in ((6, 520, 18), (382, 532, 16), (26, 660, 20), (360, 690, 20), (120, 840, 22), (250, 838, 20), (70, 760, 18), (330, 760, 18)):
+        grass(x, y, h, "#8DBB72")
+
+
+def log(x, y, L, r):
+    """A log lying on its side, its cut end toward the viewer on the left."""
+    paper(rr(x, y - r, L, 2 * r, r), "#A57A55")
+    for k in range(4):
+        line(f"M{x + 18 + k * (L - 30) / 4:.0f},{y - r * .5:.1f} L{x + 40 + k * (L - 30) / 4:.0f},{y - r * .5:.1f}", "#8C6644", w=2.2, shadow=0)
+        line(f"M{x + 30 + k * (L - 30) / 4:.0f},{y + r * .3:.1f} L{x + 50 + k * (L - 30) / 4:.0f},{y + r * .3:.1f}", "#8C6644", w=2.2, shadow=0)
+    paper(ell(x + r * .4, y, r * .55, r), "#E8CFA4")
+    paper(ell(x + r * .4, y, r * .36, r * .66), "#D9B98A", shadow=.3, grain=False)
+    paper(ell(x + r * .4, y, r * .16, r * .3), "#C9A574", shadow=.3, grain=False)
+    paper(f"M{x + L * .55:.0f},{y - r + 2} C{x + L * .55 + 4:.0f},{y - r - 14} {x + L * .55 + 16:.0f},{y - r - 18} {x + L * .55 + 22:.0f},{y - r - 12} "
+          f"C{x + L * .55 + 14:.0f},{y - r - 10} {x + L * .55 + 8:.0f},{y - r - 4} {x + L * .55 + 8:.0f},{y - r + 2} Z", "#8DBA72", shadow=.5)
+
+
+def scene_woods():
+    sky = lgrad([(0, "#DCE8E2"), (.4, "#E8EEDF"), (.6, "#EFEEDB")], 0, 0, 0, SH)
+    paper(rr(-20, -20, SW + 40, SH + 40, 0), sky, shadow=0, rough=0)
+    cloud(196, 120, .7, "#F8F6EE")
+    cloud(110, 230, .45, "#F6F3EA")
+    # far tree line
+    for i in range(12):
+        x = -14 + i * 38
+        h = 120 + 30 * math.sin(i * 1.7)
+        pine(x, 430, h, "#C4D5BA", trunk="#C9B9A2")
+    hill(420, (8, 5), (2.0, 5.0), (.6, 2.0), "#D2E0BE")
+    for x, s in ((40, 1.0), (350, .9), (110, .7), (290, .75)):
+        pine(x, 470 + (1 - s) * 30, 190 * s, "#B4CBA4", trunk="#B9A084")
+    hill(520, (10, 6), (1.4, 4.2), (2.4, .4), "#C6DBAA")
+    # a soft path into the clearing
+    paper("M150,540 C170,580 120,640 110,700 C100,760 130,820 120,880 L260,880 C250,820 230,760 240,700 C250,640 214,580 210,540 Z",
+          "#E7DABA", shadow=.4)
+    # big trees framing the clearing
+    for x, w, top in ((-6, 46, -20), (398, 48, -20)):
+        paper(f"M{x - w / 2},{top} L{x + w / 2},{top} L{x + w / 2 + 6},{620} L{x - w / 2 - 6},{620} Z", "#A68462")
+        for k in range(5):
+            line(f"M{x - w * .3 + k * w * .15:.0f},{top + 60 + k * 90} L{x - w * .3 + k * w * .15:.0f},{top + 110 + k * 90}", "#8C6A4C", w=2.4, shadow=0)
+    for cx, cy, r, c in ((10, 40, 90, "#A3C08C"), (380, 30, 96, "#A3C08C"), (60, 120, 66, "#B2CC9C"), (330, 130, 70, "#B2CC9C"),
+                         (-20, 230, 70, "#9CBB86"), (408, 240, 74, "#9CBB86")):
+        paper(blob([(cx - r, cy + r * .2), (cx - r * .8, cy - r * .6), (cx - r * .1, cy - r), (cx + r * .7, cy - r * .7),
+                    (cx + r, cy + r * .1), (cx + r * .5, cy + r * .6), (cx - r * .5, cy + r * .6)]), c)
+    hill(640, (9, 5), (1.8, 4.4), (4.2, 1.2), "#BBD39E")
+    mushroom(30, 640, 1.0)
+    mushroom(54, 650, .75, "#EBA88E")
+    mushroom(362, 652, .9)
+    log(232, 700, 128, 22)
+    hill(770, (8, 4), (2.2, 5.0), (.8, 2.6), "#AECB90")
+    bush(-10, 800, 70, "#9CBF84")
+    bush(400, 806, 74, "#9CBF84")
+    for x, y, h in ((60, 770, 20), (330, 774, 20), (160, 838, 18), (250, 836, 22), (18, 560, 16), (372, 566, 16), (200, 712, 14)):
+        grass(x, y, h, "#8DBB72")
+    for x, y, r, c in ((96, 790, 8, "#F2B5C4"), (300, 800, 8, "#FBF4E6"), (24, 700, 7, "#F6DC8A"), (368, 710, 7, "#CDB8E6")):
+        small_flower(x, y, r, c)
+
+
+def scene_job(fn):
+    def f():
+        fn()
+        return lambda name: finish(name, box=(SW, SH), fit=0, step=4.0, amp=2.0, wl=26.0, grain_density=320, grain_cap=150)
+    return f
 
 
 # ================================================================ writing and the contact sheet
