@@ -1018,20 +1018,6 @@ def flower(col="#FF7FA3"):
     return o + part(ell(0, -8, 4), GOLD, s=None, cls=.7)
 
 
-@reg((-14, -60, 14, 60))
-def lamp():
-    """A street lamp by the path (lit at night)."""
-    o = part(rr(-3, -36, 6, 92, 3), "#5E6A8A", s=None, cls=.8)
-    o += part(rr(-9, 52, 18, 8, 3), "#5E6A8A", s=None, cls=.8)
-    if NIGHT:
-        o += glow(0, -44, 30, "#FFD27A", .5)
-        o += lit('<path d="M-11,-36 L-8,-52 L8,-52 L11,-36Z" fill="#FFE9A6"/>')
-    else:
-        o += part("M-11,-36 L-8,-52 L8,-52 L11,-36Z", "#FFF4CC", s=None, ol="#5E6A8A", cls=.8)
-    o += part(rr(-12, -58, 24, 7, 3), "#5E6A8A", s=None, cls=.8)
-    return o
-
-
 # ---------------------------------------------------------------- 紙片森林 (style B)
 @reg((-50, -100, 50, 62))
 def ptree(col="#5DBB63", kind="round", lantern=0):
@@ -1435,8 +1421,9 @@ def write_all():
         uses, kb = check(name, text)
         (OUT / name).write_text(text)
         print(f"{name:24s} {kb:5.1f} KB  {uses:3d} <use>")
-    spots = {k: {"x": round(v[0] / W, 4), "y": round(v[1] / H, 4), "w": round(v[2] / W, 4), "h": round(v[3] / H, 4)}
-             for k, v in SPOTS.items()}
+    order = ("title", "sort", "owner", "pairs", "detective", "odd", "next", "city", "forest", "blocks", "abu")
+    spots = {k: {"x": round(SPOTS[k][0] / W, 4), "y": round(SPOTS[k][1] / H, 4),
+                 "w": round(SPOTS[k][2] / W, 4), "h": round(SPOTS[k][3] / H, 4)} for k in order}
     SPOTS_JSON.write_text(json.dumps(spots, ensure_ascii=False, indent=2) + "\n")
     print(SPOTS_JSON.relative_to(ROOT))
 

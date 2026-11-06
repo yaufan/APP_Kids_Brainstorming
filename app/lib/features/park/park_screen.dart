@@ -15,17 +15,17 @@ import '../parent/parent_gate.dart';
 /// Where things sit on the park map, as fractions of its 390×844 picture
 /// (design/art/park_spots.json, from design/art/park_art.py).
 abstract final class Spots {
-  static const title = Offset(0.5, 0.075);
+  static const title = Offset(0.500, 0.103);
   static const games = {
-    GameKind.odd: Offset(0.27, 0.22),
-    GameKind.next: Offset(0.7, 0.3),
-    GameKind.pairs: Offset(0.28, 0.5),
-    GameKind.detective: Offset(0.7, 0.56),
-    GameKind.sort: Offset(0.24, 0.76),
-    GameKind.owner: Offset(0.76, 0.82),
+    GameKind.odd: Offset(0.272, 0.306),
+    GameKind.next: Offset(0.749, 0.436),
+    GameKind.pairs: Offset(0.195, 0.626),
+    GameKind.detective: Offset(0.810, 0.574),
+    GameKind.sort: Offset(0.185, 0.881),
+    GameKind.owner: Offset(0.815, 0.936),
   };
-  static const lands = {Land.blocks: Offset(0.3, 0.36), Land.forest: Offset(0.6, 0.64), Land.city: Offset(0.5, 0.71)};
-  static const abu = Offset(0.5, 0.9);
+  static const lands = {Land.blocks: Offset(0.290, 0.455), Land.forest: Offset(0.385, 0.699), Land.city: Offset(0.526, 0.853)};
+  static const abu = Offset(0.526, 0.938);
 }
 
 /// The home screen: the park map with three lands and their six games.
@@ -106,14 +106,14 @@ class _ParkScreenState extends ConsumerState<ParkScreen> with SingleTickerProvid
         final pad = MediaQuery.paddingOf(context);
         return Stack(children: [
           Positioned(left: ox, top: oy, width: mw, height: mh, child: const ParkArt('map', fit: BoxFit.fill)),
-          _place(at(Spots.title), mw * 0.62, child: _Title(width: mw * 0.62)),
+          _place(at(Spots.title), mw * 0.57, child: _Title(width: mw * 0.57)),
           for (final MapEntry(key: land, value: spot) in Spots.lands.entries)
-            _place(at(spot), mw * 0.3, child: _LandTag(land: land, stars: [for (final k in GameKind.values) if (k.land == land) g.starsOf(k)].fold(0, (a, b) => a + b))),
+            _place(at(spot), mw * 0.26, child: _LandTag(land: land, stars: [for (final k in GameKind.values) if (k.land == land) g.starsOf(k)].fold(0, (a, b) => a + b))),
           for (final MapEntry(key: game, value: spot) in Spots.games.entries)
             if (s.shows(game))
               _place(
                 at(spot),
-                mw * 0.34,
+                mw * 0.3,
                 child: _Sign(
                   game: game,
                   stars: g.starsOf(game),

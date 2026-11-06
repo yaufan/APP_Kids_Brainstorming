@@ -583,6 +583,35 @@ def doc(body, w=THING, h=THING):
             f'{D.svg()}{body}</svg>\n')
 
 
+def check_path(d):
+    """Raise ValueError unless d is path data flutter_svg can read: it starts with M, every command
+    has whole sets of numbers, and no command letter is left without its numbers (flutter_svg drops
+    the WHOLE picture over one bad path, where Chromium only skips that path)."""
+    toks = _TOK.findall(d)
+    if not toks or toks[0] not in "Mm":
+        raise ValueError(f"path does not start with M: {d[:40]!r}")
+    if len("".join(toks)) != len(re.sub(r"[\s,]", "", d)):
+        raise ValueError(f"stray characters in path: {d[:60]!r}")
+    i = 0
+    while i < len(toks):
+        c = toks[i]
+        if not c.isalpha():
+            raise ValueError(f"numbers without a command in path: {d[:60]!r}")
+        i += 1
+        k = _NARGS[c.upper()]
+        j = i
+        while j < len(toks) and not toks[j].isalpha():
+            j += 1
+        cnt = j - i
+        if (k == 0 and cnt) or (k and (cnt == 0 or cnt % k)):
+            raise ValueError(f"command {c} has {cnt} numbers in path: {d[:60]!r}")
+        if c in "Aa":
+            for q in range(i, j, 7):
+                if toks[q + 3] not in ("0", "1") or toks[q + 4] not in ("0", "1"):
+                    raise ValueError(f"arc flags must be 0 or 1 in path: {d[:60]!r}")
+        i = j
+
+
 FORBIDDEN = ("<filter", "<mask", "<style", "style=", "class=", "<text", "<image", "<foreignObject",
              "<pattern", "vector-effect", "mask=", "filter=")
 
@@ -597,7 +626,14 @@ def check(name, svg):
         raise SystemExit(f"{name}: too many <use>")
     if not svg.rstrip().endswith("</svg>"):
         raise SystemExit(f"{name}: does not end with </svg>")
-    ET.fromstring(svg)
+    root = ET.fromstring(svg)
+    for el in root.iter():
+        d = el.get("d")
+        if d is not None:
+            try:
+                check_path(d)
+            except ValueError as e:
+                raise SystemExit(f"{name}: {e}")
     kb = len(svg.encode()) / 1024
     if kb > 60:
         raise SystemExit(f"{name}: {kb:.0f} KB (keep under 60 KB)")

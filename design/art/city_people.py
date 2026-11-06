@@ -799,15 +799,16 @@ def letter():
     return o
 
 
-@thing("hoe", (-60, -100, 100, 98), k=1.018, dx=13.2, dy=-5.6)
+@thing("hoe", (-60, -100, 100, 98), k=1.018, dx=3.6, dy=-5.6)
 def hoe():
     """鋤頭: a long wooden handle and a broad flat iron blade hanging from its top end."""
     o = part(tube([(-56, 92, 7.5), (14, -74, 7.5)]), "#C68A4E", s=(-2, -3), hl=hi("M-52,72 L4,-56", 2.5, .45))
     # the blade, drawn hanging down in its own frame from the socket, then turned a little
-    blade = "M-10,0 L10,0 L14,10 L32,14 Q36,15 36,20 L34,58 Q34,62 30,62 L-6,62 Q-10,62 -10,58 Z"
-    bl = part(blade, "#8E95A6", s=(-5, -6), hl=hi("M4,20 L4,48", 3, .55))
-    bl += part("M-10,50 L34,50 L34,58 Q34,62 30,62 L-6,62 Q-10,62 -10,58 Z", "#D6DAE3", s=None, k=.7)
-    o += g(bl, "translate(18 -78) rotate(-24)")
+    def blade():
+        d = "M-10,0 L10,0 L14,10 L32,14 Q36,15 36,20 L34,58 Q34,62 30,62 L-6,62 Q-10,62 -10,58 Z"
+        bl = part(d, "#8E95A6", s=(-5, -6), hl=hi("M4,20 L4,48", 3, .55))
+        return bl + part("M-10,50 L34,50 L34,58 Q34,62 30,62 L-6,62 Q-10,62 -10,58 Z", "#D6DAE3", s=None, k=.7)
+    o += at(blade, 18, -78, 1.4, rot=-24)
     o += part(ell(16, -76, 13, 13), "#6E7486", s=None)
     o += flat(ell(16, -76, 6.5), "#C68A4E")
     return o
@@ -907,5 +908,96 @@ def build(only=None):
     return out
 
 
+# ================================================================ the street (390 x 600)
+def sol(c, t=.45):
+    """A soft outline for the background: lin(c) pulled back towards c."""
+    return mix(lin(c), c, t)
+
+
+def bp(d, fill, s=(-4, -5), hl="", fr=False):
+    """A background shape: flat fill, a small cel shadow, a soft thin outline."""
+    return part(d, fill, s=s, ol=sol(fill), hl=hl, fr=fr)
+
+
 def scene_street():
-    return ""
+    """A calm 卡通城 street: a plain sky on top (the thought bubbles float there), a fire station, a
+    little shop and a clinic in the middle, a wide pavement below where the owners stand."""
+    W, H = K.SCENE_W, K.SCENE_H
+    base = 402
+    o = f'<rect x="0" y="0" width="{W}" height="{H}" fill="{lg([(0, "#CBEAFF"), (.45, "#E2F4FF"), (.7, "#F1F9FF")])}"/>'
+    for cx, cy, sc, op in ((70, 92, .8, .9), (318, 168, .62, .85), (250, 54, .5, .75)):
+        o += flat(cloud_d(cx, cy, sc), "#FFFFFF", op=op)
+    # far hills and tree tops
+    o += flat("M0,300 C40,272 90,268 130,286 C170,262 230,258 268,280 C306,260 360,262 390,280 L390,410 L0,410 Z", "#CFEBD8")
+    o += flat("M0,318 C30,300 60,300 84,314 C110,296 150,300 170,316 L170,410 L0,410 Z", "#BFE3C9")
+    o += flat("M240,312 C270,294 310,294 330,308 C350,294 380,296 390,304 L390,410 L240,410 Z", "#BFE3C9")
+
+    # ---- fire station (left)
+    red, red_d = "#F4A99E", "#E88E83"
+    o += bp("M18,236 L34,214 L50,236 Z", red_d, s=None)
+    o += bp(rr(20, 234, 28, 30, 2), red)
+    o += bp(ell(34, 248, 6, 6), "#F8D98A", s=None)
+    o += bp(rr(4, 262, 138, base - 262, 3), red, s=(-6, -6))
+    o += bp(rr(0, 254, 146, 14, 4), red_d, s=None)
+    door = "M24,402 L24,330 Q24,316 38,316 L106,316 Q120,316 120,330 L120,402 Z"
+    lines = "".join(ln(f"M24,{y} L120,{y}", "#E3D6CC", .7) for y in range(332, 402, 14))
+    o += comp(door, "#F7F0E8", lines, s=(-5, -5), ol=sol("#E2D2C4"))
+    o += bp(ell(72, 289, 14, 14), "#FFF6EA", s=None)
+    o += flat("M72,279 C80,286 80,294 76,298 C74,300 70,300 68,298 C64,294 64,288 68,284 C68,288 70,290 72,290 "
+              "C72,286 70,283 72,279 Z", "#F7B077")
+    o += bp(rr(124, 296, 12, 22, 3), "#DDEFFA", s=None)
+    # ---- a little shop (middle): striped awning, window, door
+    cream, cream_d = "#FCEBCB", "#F0D4A3"
+    o += bp(rr(146, 276, 116, base - 276, 3), cream, s=(-6, -6))
+    o += bp(rr(142, 268, 124, 13, 4), cream_d, s=None)
+    win = rr(154, 336, 66, 50, 4)
+    shelves = (ln("M154,353 L220,353 M154,370 L220,370", "#C7DCEA", .8)
+               + "".join(flat(rr(x, y, 8, 10, 2), c) for x, y, c in
+                         ((160, 341, "#F7C6C6"), (172, 341, "#F9E2A6"), (186, 341, "#CFE6C0"), (200, 341, "#F7C6C6"),
+                          (164, 358, "#F9E2A6"), (178, 358, "#C8DDF2"), (194, 358, "#F9E2A6"), (206, 358, "#CFE6C0"))))
+    o += comp(win, "#E3F2FB", shelves, s=(-3, -3), ol=sol("#B9D3E3"))
+    o += hi("M160,380 L172,364", 2.5, .6)
+    o += bp(rr(228, 340, 26, base - 340, 3), "#D9B48E")
+    o += bp(rr(233, 346, 16, 18, 3), "#E3F2FB", s=None)
+    o += flat(ell(248, 374, 2.2), "#B08A64")
+    aw = "M146,296 L262,296 L262,318 " + " ".join(
+        f"Q{n(262 - 14.5 * i - 7.25)},{328} {n(262 - 14.5 * (i + 1))},{318}" for i in range(8)) + " Z"
+    stripes = "".join(flat(rr(146 + 29 * i, 290, 14.5, 40, 0), "#F7B9C4") for i in range(4))
+    o += comp(aw, "#FFFFFF", stripes, s=(-3, -4), ol=sol("#F0B3BE"))
+    o += bp(rr(150, 388, 74, 14, 3), "#D9B48E", s=None)
+    for x, c in ((160, "#F7A1B4"), (174, "#F9D77A"), (188, "#F7A1B4"), (202, "#B9A6E0"), (216, "#F9D77A")):
+        o += flat(ell(x, 386, 5.5, 5), "#9ED3A0") + flat(ell(x, 383, 4, 4), c)
+    # ---- the clinic (right): a white plus on a teal circle, windows, glass doors
+    mint, teal = "#E3F4EE", "#9ED8CC"
+    o += bp(rr(266, 258, 124, base - 258, 3), mint, s=(-6, -6))
+    o += bp(rr(262, 250, 132, 14, 4), teal, s=None)
+    o += bp(ell(328, 290, 17, 17), "#7CCDBF", s=None)
+    o += flat("M324,280 h8 v6 h6 v8 h-6 v6 h-8 v-6 h-6 v-8 h6 Z", "#FFFFFF")
+    for x in (274, 352):
+        o += comp(rr(x, 276, 30, 34, 4), "#E3F2FB", ln(f"M{x + 15},276 L{x + 15},310 M{x},293 L{x + 30},293", "#C7DCEA", .8),
+                  s=(-3, -3), ol=sol("#B9D3E3"))
+        o += bp(rr(x - 3, 309, 36, 6, 2), teal, s=None)
+    o += bp("M296,330 L360,330 L366,342 L290,342 Z", teal, s=None)
+    o += comp(rr(302, 342, 52, base - 342, 2), "#E3F2FB", ln("M328,342 L328,402", sol("#B9D3E3"), .8), s=(-3, -3), ol=sol(teal))
+    o += hi("M310,390 L322,360 M334,390 L346,360", 2.5, .55)
+    for x in (286, 370):
+        o += bp(rr(x - 9, 384, 18, 18, 3), "#E6C9A8") + flat(ell(x, 378, 11, 10), "#A9D9A6") + flat(ell(x - 3, 374, 5, 4), "#C3E7BE")
+    # ---- the pavement
+    o += bp(rr(-4, base - 2, W + 8, 10, 0), "#E9E2EF", s=None)
+    o += f'<rect x="0" y="{base + 8}" width="{W}" height="{H - base - 8}" fill="{lg([(0, "#F7E9D2"), (1, "#F3E2C6")])}"/>'
+    rows = [base + 8, 446, 490, 542, 576]
+    for i, y in enumerate(rows[1:-1]):
+        o += ln(f"M0,{y} L{W},{y}", "#EBD4B3", .9)
+    for i in range(len(rows) - 2):
+        y0, y1 = rows[i], rows[i + 1]
+        step = 52 + 14 * i
+        off = (i % 2) * step / 2
+        x = off
+        while x < W:
+            if x > 2:
+                o += ln(f"M{n(x)},{y0} L{n(x)},{y1}", "#EBD4B3", .9)
+            x += step
+    o += bp(rr(-4, 572, W + 8, 10, 2), "#E4E0EA", s=None)
+    o += flat(rr(0, 581, W, H - 581, 0), "#CBD2DE")
+    o += flat(rr(30, 590, 40, 4, 2), "#F2F4F8") + flat(rr(150, 590, 40, 4, 2), "#F2F4F8") + flat(rr(270, 590, 40, 4, 2), "#F2F4F8")
+    return o

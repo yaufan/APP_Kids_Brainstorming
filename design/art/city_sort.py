@@ -1520,8 +1520,7 @@ def scene_nature():
     o += rect(0, 486, W_, H_ - 486, lg([(0, "#A9DBF7"), (1, "#8CCDF2")]))
     o += hline(486, calm("#6FB3E0", .3), .9)
     for y in (520, 556, 588):
-        o += ln(" ".join(("M" if i == 0 else "Q" if i % 2 else "") for i in range(1)) + f"M12,{y} " + " ".join(
-            f"Q{x + 12},{y - 6} {x + 24},{y}" for x in range(12, 370, 24)), "#FFFFFF", .8, op=.45)
+        o += ln(f"M12,{y} " + " ".join(f"Q{x + 12},{y - 6} {x + 24},{y}" for x in range(12, 370, 24)), "#FFFFFF", .8, op=.45)
     return o
 
 
@@ -1573,7 +1572,6 @@ def scene_recycling():
         c = calm("#4FC461", .4) if i % 2 == 0 else "#FFFFFF"
         o += part(f"M{x},0 L{x + 30},0 L{x + 30},26 Q{x + 15},40 {x},26Z", c, s=None, ol=calm("#3E8C3A", .45), k=.7)
     o += rect(0, 196, W_, 8, "#D9D2C8") + rect(0, 204, W_, H_ - 204, floor)
-    o += part(rr(18, 232, 354, 330, 18), "none", s=None, ol=False)
     o += K.stroke(rr(14, 226, 362, 340, 20), calm("#FFC233", .35), 2.4, extra=' stroke-dasharray="14 10"')
     for x in (34, 356):
         o += part(f"M{x - 16},198 L{x - 12},176 L{x + 12},176 L{x + 16},198Z", calm("#E8735A", .35), s=None)
