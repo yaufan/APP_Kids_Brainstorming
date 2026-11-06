@@ -18,8 +18,8 @@ import subprocess
 import sys
 import tempfile
 
-from forest_kit import (_apply, _tfm, parse, begin, blob, clip_convex, dot, ell, finish, heart_d, lgrad, line, mix, paper, poly, rect_fill, rr,
-                        spline, star_d, sym, tf, tube, write, OUT, HERE)
+from forest_kit import (LAYERS, OUT, _apply, _bbox, _inside, _tfm, begin, blob, clip_convex, dot, ell, finish, heart_d, lgrad,
+                        line, mix, paper, parse, rr, spline, star_d, tf, tube, write)
 
 INK = "#4A3346"        # eyes' pupils, mouths
 CREAM = "#FFF6EA"
@@ -114,13 +114,19 @@ def hen():
     blush(-22, -16, 5, 3.5)
 
 
+EGG = "M0,-44 C18,-44 30,-14 30,6 C30,24 16,34 0,34 C-16,34 -30,24 -30,6 C-30,-14 -18,-44 0,-44 Z"
+
+
 @thing
 def egg():
-    with tf("translate(26 6) rotate(18) scale(.78)"):
-        paper("M0,-44 C18,-44 30,-14 30,6 C30,24 16,34 0,34 C-16,34 -30,24 -30,6 C-30,-14 -18,-44 0,-44 Z", "#F6E9D6")
-    with tf("translate(-14 0) rotate(-8)"):
-        paper("M0,-44 C18,-44 30,-14 30,6 C30,24 16,34 0,34 C-16,34 -30,24 -30,6 C-30,-14 -18,-44 0,-44 Z", "#EBC79B")
-        paper("M-14,-22 C-12,-30 -8,-35 -4,-37 C-6,-30 -8,-24 -9,-18 Z", "#F6E3C8", shadow=0, grain=False)
+    """Two eggs (a brown one and a white one) in a paper egg carton (not a nest: that is the bird's)."""
+    for x, y, a, c, hl in ((-38, -14, -6, "#E7BE8E", "#F4DCBC"), (38, -18, 7, "#F4ECE0", "#FFFFFF")):
+        with tf(f"translate({x} {y}) rotate({a})"):
+            paper(EGG, c)
+            paper("M-16,-20 C-14,-30 -9,-36 -4,-38 C-6,-30 -9,-23 -10,-15 Z", hl, shadow=0, grain=False)
+    paper("M-70,2 C-60,24 -24,24 -14,6 C-8,-2 8,-2 14,6 C24,24 60,24 70,2 L64,40 C58,52 32,52 22,44 C10,49 -10,49 -22,44 "
+          "C-32,52 -58,52 -64,40 Z", "#D8CFBF")
+    line("M-40,30 L-40,42 M40,30 L40,42", "#C4B9A6", w=2, shadow=0)
 
 
 @thing
@@ -762,7 +768,6 @@ _SUS_FIX = []
 def suspect_fixed():
     """One transform for all 16 suspects: same size, feet on the same line, body in the middle."""
     if not _SUS_FIX:
-        from forest_kit import LAYERS, _bbox
         x0 = y0 = 1e9
         x1 = y1 = -1e9
         for kind in SPECIES:
@@ -811,7 +816,7 @@ def strawberry(cx, cy, s=1.0, a=0):
 
 @thing
 def strawberries():
-    line("M-58,-4 C-58,-86 58,-86 58,-4", "#B9874C", w=9, final=False)
+    line("M-60,-6 C-60,-116 60,-116 60,-6", "#B9874C", w=9, final=False)
     for x, y, a in ((-34, -30, -20), (32, -30, 18), (-12, -46, -6), (14, -48, 10), (0, -24, 0), (-44, -14, -30), (46, -14, 28)):
         strawberry(x, y, 1.15, a)
     body = "M-66,-6 L66,-6 C64,30 52,54 36,58 L-36,58 C-52,54 -64,30 -66,-6 Z"
@@ -842,7 +847,6 @@ def honey():
     cloth = ("M-42,-62 C-20,-68 20,-68 42,-62 L56,-34 C46,-28 38,-36 28,-30 C18,-36 10,-28 0,-34 C-10,-28 -18,-36 -28,-30 "
              "C-38,-36 -46,-28 -56,-34 Z")
     paper(cloth, "#FFF1E0")
-    from forest_kit import _inside
     cl = parse(cloth)[0][0]
     for gx in range(-60, 61, 12):
         for gy in range(-72, -24, 12):
@@ -922,6 +926,17 @@ def pine(x, y, h, col, trunk="#A88364"):
               mix(col, "#FFFFFF", i * .06))
 
 
+def treeline(y, trees, col):
+    """A strip of paper cut along the tops of a row of pine trees (x, height) standing on y."""
+    pts = [(-40, SH + 40), (-40, y)]
+    for x, h in trees:
+        side = [(-.44, 0), (-.22, -.27), (-.34, -.27), (-.13, -.55), (-.24, -.55), (0, -.9)]
+        pts += [(x + a * h, y + b * h) for a, b in side]
+        pts += [(x - a * h, y + b * h) for a, b in reversed(side[:-1])]
+    pts += [(430, y), (430, SH + 40)]
+    paper(pts, col)
+
+
 def mushroom(x, y, s, cap="#E58C7A"):
     with tf(f"translate({x} {y}) scale({s})"):
         paper(rr(-6, -14, 12, 16, 5), "#F6EBDA", shadow=.6)
@@ -979,18 +994,14 @@ def scene_woods():
     paper(rr(-20, -20, SW + 40, SH + 40, 0), sky, shadow=0, rough=0)
     cloud(196, 120, .7, "#F8F6EE")
     cloud(110, 230, .45, "#F6F3EA")
-    # far tree line
-    for i in range(12):
-        x = -14 + i * 38
-        h = 120 + 30 * math.sin(i * 1.7)
-        pine(x, 430, h, "#C4D5BA", trunk="#C9B9A2")
+    # far tree lines: one strip of paper each, cut along the tops of the trees
+    treeline(420, [(-10 + i * 46, 118 + 30 * math.sin(i * 1.7)) for i in range(10)], "#CCDBC2")
+    treeline(436, [(14 + i * 52, 100 + 24 * math.sin(i * 2.3 + 1)) for i in range(8)], "#C0D3B5")
     hill(420, (8, 5), (2.0, 5.0), (.6, 2.0), "#D2E0BE")
     for x, s in ((40, 1.0), (350, .9), (110, .7), (290, .75)):
         pine(x, 470 + (1 - s) * 30, 190 * s, "#B4CBA4", trunk="#B9A084")
     hill(520, (10, 6), (1.4, 4.2), (2.4, .4), "#C6DBAA")
     # a soft path into the clearing
-    paper("M150,540 C170,580 120,640 110,700 C100,760 130,820 120,880 L260,880 C250,820 230,760 240,700 C250,640 214,580 210,540 Z",
-          "#E7DABA", shadow=.4)
     # big trees framing the clearing
     for x, w, top in ((-6, 46, -20), (398, 48, -20)):
         paper(f"M{x - w / 2},{top} L{x + w / 2},{top} L{x + w / 2 + 6},{620} L{x - w / 2 - 6},{620} Z", "#A68462")
@@ -1001,11 +1012,13 @@ def scene_woods():
         paper(blob([(cx - r, cy + r * .2), (cx - r * .8, cy - r * .6), (cx - r * .1, cy - r), (cx + r * .7, cy - r * .7),
                     (cx + r, cy + r * .1), (cx + r * .5, cy + r * .6), (cx - r * .5, cy + r * .6)]), c)
     hill(640, (9, 5), (1.8, 4.4), (4.2, 1.2), "#BBD39E")
+    hill(770, (8, 4), (2.2, 5.0), (.8, 2.6), "#AECB90")
+    paper("M186,530 C176,530 172,540 176,554 C186,594 150,640 136,700 C122,760 140,820 128,880 L258,880 C248,820 230,760 236,700 "
+          "C242,646 206,594 198,554 C198,540 196,530 186,530 Z", "#E7DABA", shadow=.4)
     mushroom(30, 640, 1.0)
     mushroom(54, 650, .75, "#EBA88E")
     mushroom(362, 652, .9)
-    log(232, 700, 128, 22)
-    hill(770, (8, 4), (2.2, 5.0), (.8, 2.6), "#AECB90")
+    log(250, 688, 128, 22)
     bush(-10, 800, 70, "#9CBF84")
     bush(400, 806, 74, "#9CBF84")
     for x, y, h in ((60, 770, 20), (330, 774, 20), (160, 838, 18), (250, 836, 22), (18, 560, 16), (372, 566, 16), (200, 712, 14)):
@@ -1017,7 +1030,7 @@ def scene_woods():
 def scene_job(fn):
     def f():
         fn()
-        return lambda name: finish(name, box=(SW, SH), fit=0, step=5.0, amp=2.0, wl=26.0, grain_density=500, grain_cap=60,
+        return lambda name: finish(name, box=(SW, SH), fit=0, step=5.5, amp=2.0, wl=26.0, grain_density=500, grain_cap=50,
                                    grain_min=9000, shadow_steps=((1.5, 2.6, .2),))
     return f
 
@@ -1067,7 +1080,7 @@ def preview(out, only=None):
         for sp in ("rabbit", "squirrel", "hedgehog", "bear"):
             h.append("<div class='row'>" + "".join(tile(f"suspect_{sp}_{w}", 200) for w in ("none", "scarf", "hat", "glasses")
                                                    if f"suspect_{sp}_{w}" in names)
-                     + "".join(tile(f"suspect_{sp}_{w}", 110) for w in ("none", "scarf", "hat", "glasses") if f"suspect_{sp}_{w}" in names)
+                     + "".join(tile(f"suspect_{sp}_{w}", 120) for w in ("none", "scarf", "hat", "glasses") if f"suspect_{sp}_{w}" in names)
                      + "</div>")
     if scenes:
         h.append("<h2>scenes</h2><div class='row'>")

@@ -201,7 +201,7 @@ def use(k, paint, extra=""):
 
 
 def clip_of(k):
-    c = "c" + k[1:]
+    c = "k" + k[1:]
     D.add(c, f'<clipPath id="{c}"><use href="#{k}"/></clipPath>')
     return f"url(#{c})"
 
@@ -678,7 +678,7 @@ def fox_arm(pts, paw):
 
 
 def twinkle(cx, cy, r):
-    return part(sparkle_d(cx, cy, r), GOLD, s=None, cls=.8)
+    return part(sparkle_d(cx, cy, r), "#F7A400" if STYLE == "B" else GOLD, s=None, cls=.8)
 
 
 HEAD = sym((0, -104), [((34, -104), (62, -92), (70, -66)), ((75, -50), (77, -36), (80, -26)),
@@ -841,8 +841,8 @@ def c_fox(pose="wave"):
     cap = (f'<path d="M-58,-86 A58,56 0 0 1 58,-86Z" fill="{CAP}"/>'
            f'<path d="M-28,-138 L-30,-86 L-22,-86 L-20,-140Z" fill="#94592F"/><path d="M28,-138 L30,-86 L22,-86 L20,-140Z" fill="#94592F"/>'
            f'<rect x="-66" y="-94" width="132" height="14" rx="7" fill="{CAP_D}"/>'
-           + cpath("M0,-142 L-22,-158 L-22,-136Z", CAP_BOW, 5) + cpath("M0,-142 L22,-158 L22,-136Z", CAP_BOW, 5)
-           + ccirc(0, -143, 6, CAP_D))
+           + cpath("M0,-144 L-20,-153 L-20,-137Z", CAP_BOW, 5) + cpath("M0,-144 L20,-153 L20,-137Z", CAP_BOW, 5)
+           + ccirc(0, -144, 6, CAP_D))
     h.append(g(cap, "rotate(-7 0 -100)"))
     # face
     if pose == "think":
@@ -851,9 +851,9 @@ def c_fox(pose="wave"):
         look = (2, 3)
     for x in (-32, 32):
         if pose == "cheer":
-            h.append(cpath(f"M{x - 14},-44 A14,14 0 0 1 {x + 14},-44 L{x + 8},-44 A8,8 0 0 0 {x - 8},-44Z", C_DK, 3))
+            h.append(cpath(f"M{x - 14},-44 A14,14 0 0 1 {x + 14},-44 L{x + 8},-44 A8,8 0 0 0 {x - 8},-44Z", "#3A2418", 3))
         else:
-            h.append(ccirc(x, -46, 17, "#FFFFFF") + ccirc(x + look[0], -46 + look[1], 11.5, C_DK)
+            h.append(ccirc(x, -46, 17, "#FFFFFF") + ccirc(x + look[0], -46 + look[1], 11.5, "#2E1C14")
                      + ccirc(x + look[0] - 4, -46 + look[1] - 4.5, 4.2, "#FFFFFF"))
     if pose == "think":
         h.append(cap_(-43, -80, -22, -86, 3.4, "#7A3E1C") + cap_(22, -77, 42, -75, 3.4, "#7A3E1C"))
@@ -1034,28 +1034,34 @@ def lamp():
 
 # ---------------------------------------------------------------- 紙片森林 (style B)
 @reg((-50, -100, 50, 62))
-def ptree(col="#5DBB63", kind="round", lantern=False):
+def ptree(col="#5DBB63", kind="round", lantern=0):
+    """A paper tree; lantern=-1 or 1: a paper lantern hangs from its left or right side."""
     o = part(rr(-8, 10, 16, 52, 6), "#9A6A3E", s=(-2, -3))
     if kind == "round":
         for (cx, cy, r, c) in ((-20, -16, 28, col), (20, -18, 28, col), (0, -44, 34, lt(col, .12)), (0, -6, 30, shd(col))):
             o += part(ell(cx, cy, r), c, s=(-4, -5))
+        hang = 16
     else:
         for i, (y, w) in enumerate(((-6, 46), (-40, 38), (-70, 28))):
             o += part(f"M{-w},{y + 18} L0,{y - 30} L{w},{y + 18} Z", tone(col, 1 - i * .06), s=(-4, -5))
+        hang = 6
+    if lantern:
+        o += hanging_lantern(lantern * 30, hang, 1.25)
     return o
 
 
-@reg((-12, -14, 12, 22))
-def lantern():
-    """A little paper lantern on a string (it glows at night)."""
-    o = ln("M0,-14 L0,-6", "#7A5A3A", 1)
+def hanging_lantern(x, y, s=1.0):
+    """A little paper lantern on a string from (x, y): pale by day, glowing at night."""
+    cy = y + 22 * s
+    body = f"M{n(x - 10 * s)},{n(cy)} C{n(x - 10 * s)},{n(cy - 11 * s)} {n(x + 10 * s)},{n(cy - 11 * s)} {n(x + 10 * s)},{n(cy)} " \
+           f"C{n(x + 10 * s)},{n(cy + 11 * s)} {n(x - 10 * s)},{n(cy + 11 * s)} {n(x - 10 * s)},{n(cy)}Z"
+    o = ln(f"M{n(x)},{n(y)} L{n(x)},{n(cy - 8 * s)}", "#6A4A2A", 1)
     if NIGHT:
-        o += glow(0, 6, 22, "#FFB347", .55)
-        o += lit('<path d="M-9,6 C-9,-3 9,-3 9,6 C9,15 -9,15 -9,6Z" fill="#FFC56B"/>'
-                 '<path d="M-4,6 C-4,0 4,0 4,6 C4,12 -4,12 -4,6Z" fill="#FFF0B8"/>')
+        o += glow(x, cy, 30 * s, "#FFB347", .6)
+        o += lit(f'<path d="{body}" fill="#FFC56B"/><circle cx="{n(x)}" cy="{n(cy)}" r="{n(5 * s)}" fill="#FFF0B8"/>')
     else:
-        o += part("M-9,6 C-9,-3 9,-3 9,6 C9,15 -9,15 -9,6Z", "#FF9F6E")
-    o += part(rr(-5, -7, 10, 4, 1.5), "#B5543A") + part(rr(-5, 15, 10, 4, 1.5), "#B5543A")
+        o += part(body, "#FF9F6E")
+    o += part(rr(x - 5.5 * s, cy - 11 * s, 11 * s, 4 * s, 1.5 * s), "#B5543A") + part(rr(x - 5.5 * s, cy + 7 * s, 11 * s, 4 * s, 1.5 * s), "#B5543A")
     return o
 
 
@@ -1241,12 +1247,10 @@ def map_svg(night_=False):
     # ---- 紙片森林 (style B)
     make_grain_map()
     o.append(place("pond", 52, 612, 96, 46, style="B"))
-    for x, y, sz, kd, c, lan in ((22, 474, 42, "pine", "#5FA35A", True), (368, 550, 54, "pine", "#6BAF62", True),
-                                 (226, 470, 40, "round", "#7DBB6A", False), (250, 626, 36, "round", "#76B565", True),
-                                 (306, 610, 30, "pine", "#5FA35A", False), (388, 600, 40, "round", "#7DBB6A", False)):
-        o.append(place("ptree", x, y, sz, sz * 1.62, style="B", kind=kd, col=c))
-        if lan:
-            o.append(place("lantern", x + (sz * .3 if x < 200 else -sz * .3), y + sz * .12, 12, 19, style="B"))
+    for x, y, sz, kd, c, lan in ((22, 474, 42, "pine", "#5FA35A", 1), (368, 550, 54, "pine", "#6BAF62", -1),
+                                 (226, 470, 40, "round", "#7DBB6A", 0), (252, 624, 36, "round", "#76B565", 1),
+                                 (306, 610, 30, "pine", "#5FA35A", 0), (388, 600, 40, "round", "#7DBB6A", 0)):
+        o.append(place("ptree", x, y, sz, sz * 1.62, style="B", kind=kd, col=c, lantern=lan))
     o.append(place("mushroom", 344, 622, 26, 26, style="B"))
     o.append(place("mushroom", 196, 534, 22, 22, style="B"))
     for x, y in ((150, 568), (330, 534), (12, 568)):
@@ -1281,7 +1285,7 @@ def night_map(s):
         if p.startswith(LIT0):
             out.append(p)
         else:
-            out.append(re.sub(r"#[0-9A-Fa-f]{6}", lambda m: night(m.group(0)), p))
+            out.append(re.sub(r"#[0-9A-Fa-f]{6}(?![0-9A-Za-z_])", lambda m: night(m.group(0)), p))
     return "".join(out)
 
 
@@ -1292,7 +1296,7 @@ def forest_ground():
     global GRAIN, STYLE, GRAIN_T
     STYLE, GRAIN_T = "B", 64.0
     ground = top + f" L400,{FOREST_BOTTOM} {blades} Z"
-    o = paper(ground, "#A9D08E", grain=False, step=3.4)
+    o = paper(ground, "#A2D184", grain=False, step=3.4)
     o += paper(f"M-10,{FOREST_TOP + 70} C60,{FOREST_TOP + 46} 130,{FOREST_TOP + 66} 176,{FOREST_TOP + 100} "
                f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F", grain=False, step=3.4)
     o += paper(f"M240,{FOREST_TOP + 22} C300,{FOREST_TOP + 6} 360,{FOREST_TOP + 12} 400,{FOREST_TOP + 28} "
@@ -1300,7 +1304,7 @@ def forest_ground():
     o += paper(f"M200,{FOREST_BOTTOM - 40} C250,{FOREST_BOTTOM - 62} 330,{FOREST_BOTTOM - 60} 400,{FOREST_BOTTOM - 46} "
                f"L400,{FOREST_BOTTOM - 4} C320,{FOREST_BOTTOM - 10} 250,{FOREST_BOTTOM - 14} 200,{FOREST_BOTTOM - 40}Z", "#9CC985", grain=False, step=3.4)
     # the fibres, once over the whole floor (hills included)
-    make_grain(gap=6.2, seed=3)
+    make_grain(gap=6.8, seed=3)
     k = shape(torn(ground, step=3.4))
     T = GRAIN_T
     tiles = "".join(f'<use href="#{GRAIN}" transform="translate({n(i * T)} {n(j * T)})"/>'
@@ -1369,7 +1373,7 @@ def night_sky():
     o.append('<path d="M56,146 A26,26 0 1 0 64,188 A20,20 0 1 1 56,146Z" fill="#FFE9A8"/>')
     stars = []
     tries = 0
-    while len(stars) < 46 and tries < 2000:
+    while len(stars) < 40 and tries < 2000:
         tries += 1
         x, y = rnd.uniform(6, 384), rnd.uniform(6, 230)
         if 60 < x < 330 and 24 < y < 140:        # not behind the title
@@ -1509,21 +1513,15 @@ def preview(out):
     for j, im in enumerate(mp):
         ov = boxes_overlay(im, 2).resize((390, 844), Image.LANCZOS)
         sheet.paste(ov.convert("RGB"), (grid_w + small_w + j * (390 + pad), pad))
-    # the icon
-    try:
-        import icon
-        icon_imgs = icon.sheet_pieces()
-        x, y = pad, 3 * (200 + pad) + pad + 10
-        for kind, row in icon_imgs:
-            xx = x
-            for im, m in row:
-                sheet.paste(im, (xx, y + 192 - im.size[0]), m)
-                xx += im.size[0] + pad
-            x = xx + pad
-            if kind == "round":
-                pass
-    except Exception as e:  # the icon is drawn by icon.py; show why it is missing
-        dr.text((pad, 3 * (200 + pad) + pad + 10), f"icon: {e}", fill="#AA0000")
+    # the icon: round (adaptive, as a launcher shows it) and square (full art) at 48, 96 and 192 px
+    import icon
+    y = 3 * (200 + pad) + pad + 20
+    x = pad
+    for kind, row in icon.sheet_pieces():
+        for im, m in row:
+            sheet.paste(im, (x, y + 192 - im.size[1]), m)
+            x += im.size[0] + pad
+        x += pad
     sheet.save(out)
     print(out)
 

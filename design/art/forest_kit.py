@@ -380,6 +380,8 @@ LAYERS = []
 
 def begin():
     LAYERS.clear()
+    EXTRA_DEFS.clear()
+    _GID[0] = 0
     del _STACK[1:]
 
 
@@ -463,7 +465,7 @@ def clip_convex(subject, clipper, inset=1.0):
 def _bbox(layers):
     xs, ys = [], []
     for L in layers:
-        for pts, _ in L.get("subs", ()):
+        for pts, _ in L["subs"]:
             xs += [p[0] for p in pts]
             ys += [p[1] for p in pts]
     return min(xs), min(ys), max(xs), max(ys)
@@ -480,13 +482,13 @@ def _off(p, m=6):
 def _resample(pts, closed, step):
     """Points every `step` along the outline, keeping sharp corners."""
     P = list(pts)
-    if closed and math.dist(P[0], P[-1]) < 1e-6:
-        P = P[:-1]
-    # drop repeats
+    # drop repeats (and, on a closed outline, the end that comes back to the start)
     Q = [P[0]]
     for p in P[1:]:
         if math.dist(p, Q[-1]) > 1e-4:
             Q.append(p)
+    while closed and len(Q) > 1 and math.dist(Q[0], Q[-1]) < 1e-4:
+        Q.pop()
     P = Q
     n = len(P)
     if n < 2:
@@ -675,12 +677,6 @@ def _grain(subs, rng, density, cap, flen=(1.6, 3.6)):
     return d(light), d(dark)
 
 
-class Picture:
-    def __init__(self, svg, size):
-        self.svg = svg
-        self.size = size
-
-
 def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.5, wl=15.0,
            grain_density=110, grain_cap=110, specks=True, grain_min=220, shadow_steps=SHADOW_STEPS):
     """Fit the layers into the box (unless `fixed` = (scale, x, y): drawing point (x, y) goes to the
@@ -704,9 +700,6 @@ def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.
     nid = 0
     uses = 0
     for L in LAYERS:
-        if L["kind"] == "raw":
-            body.append(L["svg"])
-            continue
         subs = [([_apply(M, p) for p in pts], closed) for pts, closed in L["subs"]]
         torn = [_tear(pts, closed, rng, amp * L["rough"], step, wl) if L["rough"] > 0 else
                 [p for p, _ in _resample(pts, closed, step * .7)] for pts, closed in subs]
@@ -749,6 +742,7 @@ def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">'
            f'<defs>{"".join(defs)}{"".join(EXTRA_DEFS)}</defs>{"".join(body)}</svg>\n')
     EXTRA_DEFS.clear()
+    _GID[0] = 0
     return svg
 
 
@@ -765,11 +759,6 @@ def lgrad(stops, x1=0, y1=0, x2=0, y2=1, user=True):
                  for o, c, a in [(s + (None,))[:3] for s in stops])
     EXTRA_DEFS.append(f'<linearGradient id="{k}" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}"{u}>{st}</linearGradient>')
     return f"url(#{k})"
-
-
-def rect_fill(x, y, w, h, fill):
-    """A plain rectangle (e.g. a gradient sky behind a scene): drawn first, no tearing."""
-    LAYERS.append(dict(kind="raw", svg=f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{fill}"/>'))
 
 
 FORBIDDEN = ("<filter", "<mask", "<style", "<foreignObject", "<image", "<text", "class=", "style=", "<pattern")

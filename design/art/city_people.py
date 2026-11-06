@@ -623,8 +623,268 @@ OWNERS = {
 }
 
 
-# ================================================================ THINGS (marker for the things section)
+# ================================================================ THINGS (each in its own units, fitted to 85 % of 200 x 200)
 THINGS = {}
+STEEL, STEEL_D = "#C9CED9", "#8E95A6"
+
+
+# The ids 放哪裡？ also uses (sortThings in content.dart): one file serves both games, and city_sort.py
+# (the 放哪裡？ helper) writes it. These are written only when named on the command line.
+SHARED = {"fish", "carrot"}
+
+
+def thing(name, box, rot=0, k=1.0, dx=0.0, dy=0.0):
+    """Register a thing drawing: `box` = (x0, y0, x1, y1) is how far it reaches in its own units.
+    A turned drawing (rot) is fitted by its box before turning, so k (scale) and dx, dy (shift, in
+    picture units) bring what is seen back to 85 % of the picture and to its middle; they were
+    measured from the rendered pictures."""
+    def reg(fn):
+        THINGS[name] = lambda: fit(fn, box, rot=rot, fill=K.FILL * k, cx=100 + dx, cy=100 + dy)
+        return fn
+    return reg
+
+
+@thing("hose", (-74, -64, 78, 52), k=1.062, dx=-4.2, dy=-0.5)
+def hose_coil(col="#F04A3E"):
+    """A coiled fire hose with a nozzle (the mockup's)."""
+    o = ""
+    for y in (22, 8, -6):
+        o += hose(ell(-4, y, 52, 22), col, 12)
+        o += hi(f"M-30,{y + 18} C-14,{y + 22} 8,{y + 22} 24,{y + 19}", 2.6, .45)
+    o += hi("M-44,-14 C-30,-26 -10,-29 10,-28", 3, .7)
+    o += hose("M48,-6 C60,-14 62,-32 54,-40", col, 12)
+    o += part(rr(42, -16, 14, 14, 3), GOLD, s=None)
+    noz = "M44,-42 L60,-54 C64,-57 70,-52 67,-48 L56,-34 Z"
+    o += part(noz, STEEL, s=(-2, -2.5), hl=hi("M50,-42 L60,-50", 2, .8))
+    o += part("M59,-52 L70,-62 C72,-64 76,-60 74,-58 L66,-46 Z", GOLD, s=None)
+    return o
+
+
+@thing("stethoscope", (-60, -72, 64, 70), k=1.012, dx=-12.1, dy=-2.0)
+def stethoscope(col="#3D7FE0"):
+    o = hose("M0,-6 C0,24 -34,36 -26,54 C-18,70 30,66 34,40", col, 8)
+    o += hose("M-24,-60 C-30,-30 -16,-12 0,-6 M24,-60 C30,-30 16,-12 0,-6", "#B9C0CE", 5)
+    o += part(ell(-24, -62, 6, 5), "#4B4560", s=None) + part(ell(24, -62, 6, 5), "#4B4560", s=None)
+    o += part(ell(0, -6, 6), "#B9C0CE", s=None)
+    o += part(ell(38, 30, 19), STEEL, s=(-3, -4), hl=hi("M26,24 A12,12 0 0 1 34,16", 3, .9))
+    o += part(ell(38, 30, 11), STEEL_D, s=None)
+    return o
+
+
+@thing("spatula", (-40, -118, 40, 96), rot=38, k=1.104, dx=-8.8, dy=6.6)
+def spatula():
+    """A Chinese wok spatula 鍋鏟: a broad steel scoop, a steel shaft, a wooden handle."""
+    o = part(tube([(0, -44, 4.5), (0, 24, 4.5)]), STEEL, s=None, hl=hi("M-1.5,-34 L-1.5,18", 1.6, .8))
+    blade = ("M-34,-112 Q0,-118 34,-112 Q38,-111 37,-106 L32,-52 Q31,-46 25,-46 L-25,-46 Q-31,-46 -32,-52 "
+             "L-37,-106 Q-38,-111 -34,-112 Z")
+    o += part(blade, STEEL, s=(-6, -7), hl=hi("M-26,-104 L-23,-64", 4, .75))
+    o += part("M-31,-60 Q0,-56 31,-60 L30,-50 Q29,-46 24,-46 L-24,-46 Q-29,-46 -30,-50 Z", "#AEB5C4", s=None, k=.7)
+    o += part(rr(-8, -50, 16, 14, 4), STEEL_D, s=None)
+    o += part(rr(-9, 18, 18, 10, 3), STEEL_D, s=None)
+    handle = rr(-10, 26, 20, 70, 10)
+    o += part(handle, "#C27A42", s=(-3, -4), hl=hi("M-4,34 L-4,84", 3, .45))
+    o += ln("M-10,50 L10,50 M-10,70 L10,70", lin("#C27A42"), .5)
+    return o
+
+
+@thing("baby_bottle", (-36, -100, 36, 92), rot=14, k=1.006, dx=2.0, dy=-2.5)
+def baby_bottle():
+    o = ""
+    teat = "M-14,-66 C-16,-80 -9,-86 -6,-90 C-4,-98 4,-98 6,-90 C9,-86 16,-80 14,-66 Z"
+    o += part(teat, "#F6C98A", s=(-3, -3), hl=hi("M-6,-84 C-8,-78 -8,-74 -8,-70", 2.5, .7))
+    o += part(rr(-30, -68, 60, 22, 8), "#5BC0F8", s=(-4, -4), hl=hi("M-22,-62 L18,-62", 2.5, .55))
+    body = "M-26,-46 L26,-46 L28,74 Q28,90 12,90 L-12,90 Q-28,90 -28,74 Z"
+    milk = flat("M-40,-12 Q0,-4 40,-12 L40,100 L-40,100 Z", "#FFFFFF")
+    milk += flat("M-40,-12 Q0,-4 40,-12 L40,-6 Q0,2 -40,-6 Z", "#EDF3FF")
+    ticks = ln("M12,4 L24,4 M16,22 L24,22 M12,40 L24,40 M16,58 L24,58", "#7FB2E0", .6)
+    o += comp(body, "#D8EEFF", milk + ticks, s=(-6, -6), ol="#7FA6D6", hl=hi("M-18,-38 L-18,70", 4, .8))
+    o += part(heart_d(.75, -4, 40), "#FF7FA3", s=None, k=.6)
+    return o
+
+
+BONE = ("M-38.3,-9 L38.3,-9 A14,14 0 1 1 59.2,0 A14,14 0 1 1 38.3,9 L-38.3,9 "
+        "A14,14 0 1 1 -59.2,0 A14,14 0 1 1 -38.3,-9 Z")
+
+
+@thing("bone", (-74, -30, 74, 30), rot=-20, k=1.076, dx=0, dy=0)
+def bone():
+    return part(BONE, "#FFF0D4", s=(-4, -5), ol="#B98A56", hl=hi("M-56,-16 A10,10 0 0 1 -46,-24", 3, .9))
+
+
+@thing("carrot", (-40, -82, 42, 74), rot=18, k=1.069, dx=-6.4, dy=4.8)
+def carrot():
+    o = ""
+    for a in (-24, 0, 24):
+        o += g(part("M0,-36 C-10,-50 -10,-70 0,-80 C10,-70 10,-50 0,-36 Z", GREEN, s=(-2, -3)), f"rotate({a} 0 -36)")
+    body = "M-22,-34 C-24,-48 22,-48 22,-34 C20,0 8,40 2,62 C0,68 -4,68 -6,62 C-14,40 -22,0 -22,-34Z"
+    o += part(body, "#FF8C2B", s=(-6, -7), hl=hi("M-14,-28 C-14,-10 -10,10 -6,24", 4, .6))
+    o += ln("M-14,-12 L-4,-12 M6,4 L16,4 M-10,22 L0,22 M2,38 L8,38", "#D9631A", .8)
+    return o
+
+
+@thing("fish", (-90, -44, 92, 44), rot=-12, k=0.983, dx=-4.4, dy=7.4)
+def fish():
+    """A whole blue-silver fish (food for the cat, not a pet goldfish)."""
+    back, belly = "#5B8FC9", "#E8F0F8"
+    o = ""
+    o += part("M-14,-30 C-6,-46 18,-48 32,-30 Z", "#4A7AB4", s=(-2, -2))                      # top fin
+    o += part("M-4,28 C2,40 16,40 20,28 Z", "#4A7AB4", s=None)                                   # bottom fin
+    tail = "M50,-2 C62,-16 74,-34 90,-38 C84,-18 84,14 90,38 C74,34 62,16 50,2 Z"
+    o += part(tail, back, s=(-3, -4))
+    o += ln("M62,-6 L82,-26 M64,0 L84,0 M62,6 L82,26", "#3F6EA6", .55)
+    body = "M-86,0 C-78,-26 -40,-36 -6,-34 C24,-32 46,-14 56,0 C46,14 24,32 -6,34 C-40,36 -78,26 -86,0 Z"
+    inner = flat("M-100,2 C-60,10 0,16 70,0 L70,60 L-100,60 Z", belly)
+    inner += "".join(ln(f"M{x},-18 Q{x + 6},-12 {x},-6", "#4A7AB4", .5) + ln(f"M{x + 8},-8 Q{x + 14},-2 {x + 8},4", "#4A7AB4", .5)
+                     for x in (-12, 4, 20))
+    o += comp(body, back, inner, s=(-6, -7), hl=hi("M-66,-14 C-50,-26 -26,-30 -4,-28", 4, .55))
+    o += ln("M-48,-20 C-40,-8 -40,8 -48,20", "#3F6EA6", .8)
+    o += part(ell(-64, -6, 8.5), "#FFFFFF", s=None, ol="#3F6EA6", k=.7)
+    o += flat(ell(-63, -5, 5), "#1F2A3A") + hidot(-65, -8, 1.8, 1)
+    o += part("M-38,6 C-30,6 -22,14 -26,20 C-32,20 -38,14 -38,6 Z", "#4A7AB4", s=None, k=.7)    # side fin
+    o += ln("M-86,2 L-80,3", "#3F6EA6", .7)
+    return o
+
+
+@thing("whistle", (-74, -60, 70, 46), k=0.983, dx=3.4, dy=3.4)
+def whistle():
+    """A steel whistle on a red cord."""
+    o = hose("M30,-24 C28,-46 46,-58 58,-46 C68,-36 60,-20 44,-20", "#F2463F", 5)
+    o += part(ell(32, -22, 7), STEEL_D, s=None, fr=False)
+    o += flat(ell(32, -22, 3.5), "#FFFFFF")
+    d = ("M-72,-16 L-6,-16 C2,-30 22,-36 36,-28 C54,-18 56,10 42,24 C28,38 2,38 -10,24 C-14,18 -14,10 -14,6 "
+         "L-72,6 Q-76,6 -76,2 L-76,-12 Q-76,-16 -72,-16 Z")
+    o += part(d, STEEL, s=(-6, -7), hl=hi("M-66,-10 L-24,-10", 3.5, .85) + hi("M6,-18 C14,-24 24,-26 32,-22", 3.5, .85))
+    o += part("M-24,-16 L-8,-16 L-12,-8 L-24,-8 Z", "#4B4560", s=None, k=.6)
+    o += ln("M-72,-5 L-30,-5", STEEL_D, .5)
+    return o
+
+
+@thing("letter", (-82, -58, 82, 58), rot=-8, k=0.934, dx=0, dy=0)
+def letter():
+    """An envelope with a stamp (airmail edge, no writing)."""
+    w, h = 160, 108
+    env = rr(-w / 2, -h / 2, w, h, 8)
+    edge = ""
+    k = 0
+    for x in range(-90, 90, 14):
+        c = "#F2463F" if k % 2 == 0 else "#3D8BF2"
+        edge += flat(f"M{x},{-h / 2 - 2} l8,0 l-6,9 l-8,0 Z", c) + flat(f"M{x},{h / 2 + 2} l8,0 l-6,-9 l-8,0 Z", c)
+        k += 1
+    for y in range(-60, 62, 14):
+        c = "#F2463F" if k % 2 == 0 else "#3D8BF2"
+        edge += flat(f"M{-w / 2 - 2},{y} l0,8 l9,-6 l0,-8 Z", c) + flat(f"M{w / 2 + 2},{y} l0,8 l-9,-6 l0,-8 Z", c)
+        k += 1
+    inner = edge
+    inner += ln(f"M{-w / 2 + 6},{-h / 2 + 8} L0,8 L{w / 2 - 6},{-h / 2 + 8}", WHITE_OL, .8)
+    o = comp(env, "#FFFFFF", inner, s=(-6, -7), ol=WHITE_OL, sh="#E1DCF0")
+    # the stamp: a white zigzag edge round a picture of a little sun and hill
+    st = ""
+    sx0, sy0, sw_, sh_ = 34, -40, 34, 40
+    pts = []
+    for i in range(8):
+        pts += [(sx0 + i * sw_ / 8, sy0), (sx0 + (i + .5) * sw_ / 8, sy0 + 2.5)]
+    for i in range(8):
+        pts += [(sx0 + sw_, sy0 + i * sh_ / 8), (sx0 + sw_ - 2.5, sy0 + (i + .5) * sh_ / 8)]
+    for i in range(8):
+        pts += [(sx0 + sw_ - i * sw_ / 8, sy0 + sh_), (sx0 + sw_ - (i + .5) * sw_ / 8, sy0 + sh_ - 2.5)]
+    for i in range(8):
+        pts += [(sx0, sy0 + sh_ - i * sh_ / 8), (sx0 + 2.5, sy0 + sh_ - (i + .5) * sh_ / 8)]
+    st += part(poly(pts), "#FFFFFF", s=None, ol=WHITE_OL, k=.6)
+    pic = rr(sx0 + 5, sy0 + 5, sw_ - 10, sh_ - 10, 2)
+    st += comp(pic, "#7FD0F5", flat(ell(sx0 + 17, sy0 + 40, 20, 12), "#4FC461") + flat(ell(sx0 + 22, sy0 + 14, 5), GOLD),
+               s=None, ol="#4A8FC0", k=.6)
+    o += st
+    o += ln("M-6,-30 C0,-34 6,-26 12,-30 C18,-34 24,-26 30,-30 M-6,-22 C0,-26 6,-18 12,-22 C18,-26 24,-18 30,-22", "#B1A9C9", .6)
+    o += part(heart_d(.8, 0, 12), RED, s=None, k=.6)
+    return o
+
+
+@thing("hoe", (-60, -100, 100, 98), k=1.024, dx=4.6, dy=-5.1)
+def hoe():
+    """鋤頭: a long wooden handle and a wide flat iron blade at its top end, at a right angle."""
+    o = part(tube([(-52, 92, 7.5), (22, -70, 7.5)]), "#C68A4E", s=(-2, -3), hl=hi("M-48,72 L10,-50", 2.5, .45))
+    # the blade, drawn pointing down in its own frame, then turned to stand at a right angle to the handle
+    blade = "M-12,-6 L12,-6 L30,52 Q31,58 25,58 L-25,58 Q-31,58 -30,52 Z"
+    bl = part(blade, "#8E95A6", s=(-5, -6), hl=hi("M-10,4 L-20,44", 3, .55))
+    bl += part("M-28,46 L28,46 L30,52 Q31,58 25,58 L-25,58 Q-31,58 -30,52 Z", "#D6DAE3", s=None, k=.7)
+    o += g(bl, "translate(26 -76) rotate(-62)")
+    o += part(ell(24, -74, 13, 13), "#6E7486", s=None)
+    o += flat(ell(24, -74, 6.5), "#C68A4E")
+    return o
+
+
+@thing("glasses", (-84, -34, 84, 40), k=0.944, dx=0, dy=3.8)
+def glasses():
+    """Reading glasses: brown frames, see-through lenses (pale in the thought bubble's silhouette)."""
+    fr = "#8A4F2B"
+    o = ""
+    for sx in (-1, 1):
+        o += hose(f"M{sx * 74},-14 L{sx * 82},-30", fr, 6)
+    lens = lambda sx: rr(sx * 44 - 32, -24, 64, 52, 22)
+    for sx in (-1, 1):
+        o += flat(lens(sx), "#CDEEFF", op=.45)
+        o += hi(f"M{sx * 44 - 18},-6 L{sx * 44 - 6},-16 M{sx * 44 - 14},6 L{sx * 44 + 6},-12", 4, .9)
+    for sx in (-1, 1):
+        o += hose(lens(sx), fr, 7)
+    o += hose("M-12,-4 Q0,-14 12,-4", fr, 6)
+    return o
+
+
+@thing("schoolbag", (-64, -86, 64, 86), k=0.950, dx=0, dy=3.3)
+def schoolbag():
+    """A child's backpack: a carry loop on top, straps, a big front pocket."""
+    col, strap, pk = "#3D8BF2", "#2A5FB0", "#FFC233"
+    o = hose("M-20,-68 C-20,-92 20,-92 20,-68", strap, 7)
+    for sx in (-1, 1):
+        o += part(rr(sx * 58 - 7, -50, 14, 112, 6), strap, s=None)
+    body = "M-50,-56 C-50,-74 -34,-78 0,-78 C34,-78 50,-74 50,-56 L52,64 C52,80 40,84 0,84 C-40,84 -52,80 -52,64 Z"
+    o += part(body, col, s=(-8, -9), hl=hi("M-40,-60 C-34,-70 -20,-72 -6,-72", 4, .6))
+    pocket = "M-38,10 C-38,0 -30,-2 0,-2 C30,-2 38,0 38,10 L38,58 C38,70 30,72 0,72 C-30,72 -38,70 -38,58 Z"
+    o += part(pocket, pk, s=(-5, -6), hl=hi("M-28,10 L-28,52", 3, .55))
+    o += ln("M-32,12 Q0,6 32,12", lin(pk), .7)
+    o += part(rr(18, 4, 8, 16, 3), "#FFFFFF", s=None, ol=lin(pk), k=.6)
+    o += part(star_d(14, 6.5, cx=0, cy=40, round_=.18), "#FFFFFF", s=None, ol=lin(pk), k=.7)
+    o += part(rr(-30, -40, 60, 10, 5), "#BFE3FF", s=None, ol=lin(col), k=.7)
+    return o
+
+
+@thing("scissors", (-46, -108, 46, 78), rot=-28, k=0.983, dx=-10.3, dy=-1.5)
+def scissors():
+    """Hairdresser's scissors: long steel blades, two finger rings (one with a finger rest)."""
+    ring = "#9B5DE5"
+    o = ""
+    for sx in (-1, 1):
+        o += part(tube([(0, 0, 6.5), (sx * 16, 30, 6.5), (sx * 22, 42, 6.5)]), ring, s=None)
+    for sx in (-1, 1):
+        o += part(ell(sx * 26, 56, 19, 19) + " " + ell(sx * 26, 56, 10.5, 10.5), ring, s=(-3, -4), fr=True)
+    o += part("M42,66 C50,72 50,82 42,84 C38,78 36,74 34,72 Z", ring, s=None)
+    for sx in (-1, 1):
+        blade = f"M{sx * -3},6 L{sx * 24},-104 C{sx * 30},-74 {sx * 26},-30 {sx * 13},2 Z"
+        o += part(blade, STEEL, s=(-2, -3), hl=hi(f"M{sx * 17},-20 L{sx * 24},-74", 2.4, .85))
+    o += part(ell(0, 2, 7), GOLD, s=None, hl=hidot(-2, 0, 2))
+    return o
+
+
+@thing("paintbrush", (-22, -106, 22, 94), rot=36, k=1.181, dx=2.4, dy=-1.2)
+def paintbrush():
+    """A paintbrush with a red handle and a tip dipped in bright paint."""
+    o = ""
+    handle = "M-13,-14 L13,-14 L9,84 Q9,94 0,94 Q-9,94 -9,84 Z"
+    o += part(handle, "#F2463F", s=(-3, -4), hl=hi("M-5,-4 L-4,80", 3, .55))
+    tuft = "M-17,-40 C-24,-58 -16,-84 0,-106 C16,-84 24,-58 17,-40 Z"
+    paint = flat("M-40,-82 C-20,-90 10,-74 40,-84 L40,-130 L-40,-130 Z", "#3D8BF2")
+    paint += flat("M-40,-82 C-20,-90 10,-74 40,-84 L40,-74 C10,-64 -20,-80 -40,-72 Z", "#4FC461")
+    paint += flat("M-40,-72 C-20,-80 10,-64 40,-74 L40,-64 C10,-54 -20,-70 -40,-62 Z", "#FFC233")
+    o += comp(tuft, "#EBC98F", paint, s=(-3, -4), ol="#2F64B5", hl=hi("M-8,-56 C-10,-70 -6,-84 -2,-94", 3, .6))
+    o += part(rr(-16, -44, 32, 32, 4), STEEL, s=(-2, -3), hl=hi("M-10,-38 L-10,-18", 2.5, .8))
+    o += ln("M-16,-26 L16,-26 M-16,-20 L16,-20", STEEL_D, .6)
+    return o
+
+
+def drop_d(x, y, s=1.0):
+    p = lambda a, b: f"{n(x + a * s)},{n(y + b * s)}"
+    return (f"M{p(0, 0)} C{p(4, 9)} {p(8, 15)} {p(8, 19)} C{p(8, 24)} {p(4, 27)} {p(0, 27)} "
+            f"C{p(-4, 27)} {p(-8, 24)} {p(-8, 19)} C{p(-8, 15)} {p(-4, 9)} {p(0, 0)}Z")
 
 
 # ================================================================ writing and checking
@@ -637,7 +897,7 @@ def build(only=None):
         begin(ol=OL_PEOPLE)
         out[name] = save(name, fn())
     for name, fn in THINGS.items():
-        if only and name not in only:
+        if (only and name not in only) or (not only and name in SHARED):
             continue
         begin(ol=OL_THING)
         out[name] = save(name, fn())

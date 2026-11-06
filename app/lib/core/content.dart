@@ -140,10 +140,10 @@ const sortScenes = [
     Stray('soap', 'soap_dish', '肥皂放在肥皂盒，洗手的時候用。'),
   ]),
   SortScene('kitchen', '廚房', Level.small, [
-    Place('fridge', '冰箱', x: 0.22, y: 0.42, w: 0.36),
+    Place('fridge', '冰箱', x: 0.22, y: 0.64, w: 0.36),
     Place('cupboard', '碗櫃', x: 0.72, y: 0.26, w: 0.44),
     Place('sink', '水槽', x: 0.72, y: 0.62, w: 0.42),
-    Place('freezer', '冷凍庫', x: 0.22, y: 0.12, w: 0.36, from: Level.big),
+    Place('freezer', '冷凍庫', x: 0.22, y: 0.41, w: 0.36, from: Level.big),
   ], [
     Stray('milk', 'fridge', '牛奶要冰在冰箱裡，才不會壞掉。'),
     Stray('vegetables', 'fridge', '青菜放冰箱，才會新鮮。'),
