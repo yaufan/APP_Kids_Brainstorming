@@ -7,7 +7,13 @@
 - 不連網、不定位、沒有廣告、沒有帳號。
 
 ## 目前進度
-- 設計定案（2026-11-06），開始做 0.1：三個園區、六個遊戲、三個難度、偵探手冊、休息時間、家長模式、音樂和音效。
+- 0.1 做好了，還沒發布：三個園區（三種卡通畫風）、六個遊戲、三個難度、偵探手冊、休息時間、家長模式、音樂和音效、APP 圖示。版本紀錄在 [CHANGELOG.md](CHANGELOG.md)。
+
+## 程式和素材在哪裡
+- `app/`：Flutter 程式。`lib/core/` 是題目、出題規則、存檔、聲音、語音；`lib/features/` 是樂園地圖、六個遊戲（`play/`）、偵探手冊、休息、家長模式。
+- `design/art/`：用 Python 畫的圖，三種畫風各一套（`city_*`、`forest_*`、`blocks_*`），阿布和樂園地圖在 `park_art.py`，APP 圖示在 `icon.py`。
+- `design/sounds/make_sounds.py`：合成全部的音樂和聲音。
+- 測試：在 `app/` 裡 `flutter test`；完整流程 `flutter test test/flow_test.dart`，截圖在 `app/build/screenshots/`。
 
 ## 授權
 - 非商業使用授權：自己、家人使用，或學校、非營利團體的教學，都可以免費使用、修改、分享，要註明出處。

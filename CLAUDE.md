@@ -23,7 +23,7 @@
 - 名稱：想一想樂園。
 
 ## GitHub Actions
-- 工作流程（照小卡認天下，**還沒加**；第一次放上 main 前要先問）：
+- 工作流程（照小卡認天下，2026-11-06 加好；第一次放上 main 前要先問）：
   - `app.yml`（App）：推到 `main` 而且改到 `app/**` 時跑分析、全部測試（含完整流程）、打包 APK，約 15～20 分鐘。
   - `release.yml`（Release）：推到 `main` 而且改到 `app/pubspec.yaml`、`CHANGELOG.md` 或它自己時，版本還沒發布過就打包三個 APK 放上 Releases，約 20 分鐘；版本沒變約 1 分鐘。
   - `cleanup.yml`：手動，刪舊的建置檔案，約 1 分鐘。

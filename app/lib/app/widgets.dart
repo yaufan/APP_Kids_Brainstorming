@@ -406,7 +406,7 @@ class TokenView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = size * (0.55 + 0.15 * token.size) / 1.0;
+    final s = size * (0.62 + 0.13 * token.size);
     return SizedBox(width: size, height: size, child: Center(child: CustomPaint(size: Size.square(s), painter: _TokenPainter(token.shape, hues[token.hue]!))));
   }
 }

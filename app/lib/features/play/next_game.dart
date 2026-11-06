@@ -122,11 +122,11 @@ class _Train extends StatelessWidget {
             height: unit * 1.6,
             child: FittedBox(
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                for (final t in round.shown) _Wagon(unit: unit, child: TokenView(t, size: unit * 0.92)),
+                for (final t in round.shown) _Wagon(unit: unit, child: TokenView(t, size: unit)),
                 _Wagon(
                   unit: unit,
                   dashed: !filled,
-                  child: filled ? TokenView(round.answer, size: unit * 0.92) : Text('?', style: TextStyle(fontSize: unit * 0.55, fontWeight: FontWeight.w700, color: const Color(0xFF7A6FB0))),
+                  child: filled ? TokenView(round.answer, size: unit) : Text('?', style: TextStyle(fontSize: unit * 0.55, fontWeight: FontWeight.w700, color: const Color(0xFF7A6FB0))),
                 ),
                 _Engine(unit: unit),
               ].reversed.toList()),
