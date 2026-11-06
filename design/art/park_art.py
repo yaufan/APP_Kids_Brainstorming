@@ -773,7 +773,7 @@ def fox(pose="wave"):
         o.append(glass_to((-118, -88), (-108, -30), 24))
         o.append(part(ell(-108, -30, 12), FOXD, s=(-2.5, -3)))
         o.append(fox_arm([(30, 42, 10.5), (70, 32, 9.5), (100, 4, 9.5), (108, -24, 9.5)], (108, -30, 12.5)))
-        o.append(twinkle(126, -74, 11) + twinkle(-74, -136, 8) + twinkle(96, -128, 7))
+        o.append(twinkle(126, -74, 11) + twinkle(-136, -140, 8) + twinkle(102, -134, 7))
     return "".join(o)
 
 
@@ -883,7 +883,7 @@ def c_fox(pose="wave"):
         o.append(cap_(-32, 40, -72, 30, 10.5, C_OR) + cap_(-72, 30, -106, -26, 10, C_OR))
         o.append(c_glass((-118, -88), (-108, -30), 24) + ccirc(-108, -30, 13, FOXD))
         o.append(cap_(32, 40, 72, 30, 10.5, C_OR) + cap_(72, 30, 106, -26, 10, C_OR) + ccirc(108, -30, 13.5, FOXD))
-        o.append(c_star(126, -74, 12) + c_star(-74, -136, 9) + c_star(96, -128, 8))
+        o.append(c_star(126, -74, 12) + c_star(-136, -140, 9) + c_star(102, -134, 8))
     return "".join(o)
 
 
@@ -1292,10 +1292,10 @@ def night_map(s):
 def forest_ground():
     top = f"M-10,{FOREST_TOP + 2} " + " ".join(
         f"Q{x + 30},{FOREST_TOP - 8 + (8 if (x // 60) % 2 else 0)} {x + 60},{FOREST_TOP + 2}" for x in range(-10, 400, 60))
-    blades = " ".join(f"L{x + 6},{FOREST_BOTTOM + 14 + (k % 3) * 4} L{x + 12},{FOREST_BOTTOM}" for k, x in enumerate(range(400, -20, -12)))
+    blades = " ".join(f"L{x + 6},{FOREST_BOTTOM + 14 + (k % 3) * 4} L{x + 12},{FOREST_BOTTOM}" for k, x in enumerate(range(400, -32, -12)))
     global GRAIN, STYLE, GRAIN_T
     STYLE, GRAIN_T = "B", 64.0
-    ground = top + f" L400,{FOREST_BOTTOM} {blades} Z"
+    ground = top + f" L410,{FOREST_BOTTOM} {blades} L-24,{FOREST_BOTTOM} L-24,{FOREST_TOP + 2} Z"
     o = paper(ground, "#A2D184", grain=False, step=3.4)
     o += paper(f"M-10,{FOREST_TOP + 70} C60,{FOREST_TOP + 46} 130,{FOREST_TOP + 66} 176,{FOREST_TOP + 100} "
                f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F", grain=False, step=3.4)

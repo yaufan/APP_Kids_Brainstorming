@@ -799,17 +799,17 @@ def letter():
     return o
 
 
-@thing("hoe", (-60, -100, 100, 98), k=1.024, dx=4.6, dy=-5.1)
+@thing("hoe", (-60, -100, 100, 98), k=1.018, dx=13.2, dy=-5.6)
 def hoe():
-    """鋤頭: a long wooden handle and a wide flat iron blade at its top end, at a right angle."""
-    o = part(tube([(-52, 92, 7.5), (22, -70, 7.5)]), "#C68A4E", s=(-2, -3), hl=hi("M-48,72 L10,-50", 2.5, .45))
-    # the blade, drawn pointing down in its own frame, then turned to stand at a right angle to the handle
-    blade = "M-12,-6 L12,-6 L30,52 Q31,58 25,58 L-25,58 Q-31,58 -30,52 Z"
-    bl = part(blade, "#8E95A6", s=(-5, -6), hl=hi("M-10,4 L-20,44", 3, .55))
-    bl += part("M-28,46 L28,46 L30,52 Q31,58 25,58 L-25,58 Q-31,58 -30,52 Z", "#D6DAE3", s=None, k=.7)
-    o += g(bl, "translate(26 -76) rotate(-62)")
-    o += part(ell(24, -74, 13, 13), "#6E7486", s=None)
-    o += flat(ell(24, -74, 6.5), "#C68A4E")
+    """鋤頭: a long wooden handle and a broad flat iron blade hanging from its top end."""
+    o = part(tube([(-56, 92, 7.5), (14, -74, 7.5)]), "#C68A4E", s=(-2, -3), hl=hi("M-52,72 L4,-56", 2.5, .45))
+    # the blade, drawn hanging down in its own frame from the socket, then turned a little
+    blade = "M-10,0 L10,0 L14,10 L32,14 Q36,15 36,20 L34,58 Q34,62 30,62 L-6,62 Q-10,62 -10,58 Z"
+    bl = part(blade, "#8E95A6", s=(-5, -6), hl=hi("M4,20 L4,48", 3, .55))
+    bl += part("M-10,50 L34,50 L34,58 Q34,62 30,62 L-6,62 Q-10,62 -10,58 Z", "#D6DAE3", s=None, k=.7)
+    o += g(bl, "translate(18 -78) rotate(-24)")
+    o += part(ell(16, -76, 13, 13), "#6E7486", s=None)
+    o += flat(ell(16, -76, 6.5), "#C68A4E")
     return o
 
 
