@@ -20,6 +20,18 @@ each page into a PNG with Playwright's Chromium. The font is jf open-huninn from
     9_家長模式.png      parents' settings
     contact_sheet.png  screens 1-9 in two rows
 
+Round 2 (the app is now 「想一想樂園」: three lands, one style each, 阿布 changes style in each land):
+
+    10_樂園地圖.png                 new home screen: the park map (A frame), 卡通城 A, 紙片森林 B, 積木王國 C
+    11_紙片森林_連連看.png          draw a line between pairs, all in paper style B (UI too)
+    12_紙片森林_小偵探.png          who ate the strawberry? (style B)
+    13_積木王國_接下來是什麼.png    what comes next? block train (style C, flat UI)
+    14_積木王國_哪個不一樣.png      which one is different? (style C)
+    15_阿布變身.png                 阿布 in the three styles walking through the three land gates
+    contact_sheet2.png             pages 10-15 in two rows
+
+    python3 make_mockups.py 12       # one of the new pages; c2 = the second contact sheet
+
 Style A 「動畫片風」 (used for screens 1-9): thin outlines in a darker shade of each fill (about
 2.2 px on screen whatever the size: `vector-effect: non-scaling-stroke`), bright flat fills with
 one hard-edged cel shadow (the `cel_mask` crescent) and a small highlight, big eyes.
@@ -178,16 +190,16 @@ def drop(op=.14, dy=5, sd=7, col="#5A4A70"):
     return f"url(#{k})"
 
 
-def paper_filter():
+def paper_filter(rough=1.0):
     """Style B: a slightly torn edge, paper grain and a small shadow under the layer (sizes on screen)."""
-    s = SCALE
-    k = "pp" + _h(round(s, 3))
+    s = SCALE / rough
+    k = "pp" + _h(round(s, 3), rough)
     D.add(k, f'<filter id="{k}" x="-12%" y="-12%" width="130%" height="135%" color-interpolation-filters="sRGB">'
              f'<feTurbulence type="fractalNoise" baseFrequency="{.05 / s:.4f}" numOctaves="2" seed="5" result="w"/>'
              f'<feDisplacementMap in="SourceGraphic" in2="w" scale="{3.2 / s:.2f}" xChannelSelector="R" yChannelSelector="G" result="c"/>'
-             f'<feTurbulence type="fractalNoise" baseFrequency="{.9 / s:.3f} {.35 / s:.3f}" numOctaves="2" seed="11" result="n"/>'
+             f'<feTurbulence type="fractalNoise" baseFrequency="{.55 / s:.3f} {.22 / s:.3f}" numOctaves="2" seed="11" result="n"/>'
              '<feColorMatrix in="n" type="matrix" values=".33 .33 .33 0 0 .33 .33 .33 0 0 .33 .33 .33 0 0 0 0 0 0 1" result="g"/>'
-             '<feComposite in="c" in2="g" operator="arithmetic" k2="1" k3=".16" k4="-.08" result="t"/>'
+             '<feComposite in="c" in2="g" operator="arithmetic" k2="1" k3=".13" k4="-.065" result="t"/>'
              '<feComposite in="t" in2="c" operator="in" result="t2"/>'
              f'<feDropShadow in="t2" dx="{1.1 / s:.2f}" dy="{2.0 / s:.2f}" stdDeviation="{1.5 / s:.2f}" flood-color="#4A3420" flood-opacity=".4"/>'
              '</filter>')
@@ -952,12 +964,15 @@ def plate():
     return o
 
 
-def critter(kind, hat=False, crumbs=False, grey=False):
-    """Suspects for 「誰拿走了蛋糕？」: rabbit, cat, bear."""
-    fur = {"rabbit": "#FBF5EE", "cat": "#AAB4C6", "bear": "#B98252"}[kind]
-    li = {"rabbit": "#FFFFFF", "cat": "#E9EDF4", "bear": "#EBC9A0"}[kind]
-    ol = {"rabbit": "#9A8AA8", "cat": None, "bear": None}[kind]
+def critter(kind, hat=False, crumbs=False, grey=False, scarf=False, juice=False):
+    """Suspects: rabbit, cat, bear (「誰拿走了蛋糕？」) and squirrel (「誰吃掉了草莓？」)."""
+    fur = {"rabbit": "#FBF5EE", "cat": "#AAB4C6", "bear": "#B98252", "squirrel": "#D9874A"}[kind]
+    li = {"rabbit": "#FFFFFF", "cat": "#E9EDF4", "bear": "#EBC9A0", "squirrel": "#FBE3C4"}[kind]
+    ol = {"rabbit": "#9A8AA8", "cat": None, "bear": None, "squirrel": None}[kind]
     o = []
+    if kind == "squirrel":
+        tail = blob([(24, 88), (66, 86), (96, 56), (104, 12), (92, -30), (64, -48), (40, -40), (58, -18), (68, 14), (58, 44), (34, 56)])
+        o.append(comp(tail, fur, part(blob([(58, -30), (82, -10), (86, 24), (72, 50), (66, 20), (62, -6)]), li, s=None, ol=False), s=(-7, -8)))
     if kind == "cat":
         o.append(part(tube([(30, 84, 6), (54, 70, 6), (60, 44, 6), (52, 30, 6)]), fur, s=(-2, -3)))
     # body, feet, arms
@@ -975,6 +990,10 @@ def critter(kind, hat=False, crumbs=False, grey=False):
         for sx in (-1, 1):
             o.append(g(part("M-22,-50 L-6,-92 C-4,-96 0,-96 2,-92 L22,-56 Z", fur, s=(-3, -4))
                        + part("M-12,-56 L-3,-82 L10,-58 Z", "#FFC2D1", s=None, ol=False), f"translate({sx * 30} 0) rotate({sx * 8})"))
+    elif kind == "squirrel":
+        for sx in (-1, 1):
+            o.append(g(part("M-12,8 C-14,-10 -6,-26 2,-30 C8,-20 12,-6 12,8 Z", fur, s=(-2, -3))
+                       + part("M-5,4 C-6,-8 -2,-16 2,-19 C5,-12 6,-4 5,4 Z", "#FFC2D1", s=None, ol=False), f"translate({sx * 34} -62) rotate({sx * 12})"))
     else:
         for sx in (-1, 1):
             o.append(part(ell(sx * 40, -62, 17), fur, s=(-3, -4)) + part(ell(sx * 40, -62, 8), li, s=None, ol=False))
@@ -985,12 +1004,12 @@ def critter(kind, hat=False, crumbs=False, grey=False):
     if kind == "cat":
         inner = ln("M-10,-70 L-8,-56 M0,-72 L0,-58 M10,-70 L8,-56", shd(fur), "o2")
     o.append(comp(head, fur, inner, s=(-9, -9), ol=ol, hl=hi(f"M{-hw * .6:.0f},-52 C-24,-64 -10,-68 4,-68", 5, .55)))
-    if kind == "bear":
+    if kind in ("bear", "squirrel"):
         o.append(part(ell(0, -8, 20, 15), li, s=None, ol=lin(fur)))
     o.append(eye(-21, -26, 11, 13, .5, 1.5, ol="#4A3346"))
     o.append(eye(21, -26, 11, 13, .5, 1.5, ol="#4A3346"))
     o.append(blush(-36, -6, 8, 5) + blush(36, -6, 8, 5))
-    nose = {"rabbit": "#FF8FAB", "cat": "#FF8FAB", "bear": "#3A2418"}[kind]
+    nose = {"rabbit": "#FF8FAB", "cat": "#FF8FAB", "bear": "#3A2418", "squirrel": "#5A3424"}[kind]
     o.append(part("M-6,-12 C-6,-16 6,-16 6,-12 C6,-8 2,-5 0,-5 C-2,-5 -6,-8 -6,-12Z", nose, s=None, ol=lin(nose)))
     o.append(ln("M-9,0 Q-4,5 0,-3 Q4,5 9,0", "#4A3346", "o2"))
     if kind == "rabbit":
@@ -1001,6 +1020,14 @@ def critter(kind, hat=False, crumbs=False, grey=False):
         o.append(part(ell(13, 6, 5, 4), "#FFD3E0", s=None, ol="#E28AA8"))
         for x, y in ((20, 12), (9, 14), (25, 3)):
             o.append(part(ell(x, y, 2.2), "#C88A54", s=None, ol=False))
+    if juice:
+        o.append(part("M6,2 C12,-2 22,0 22,8 C22,14 16,15 12,12 C10,16 6,16 6,12 C2,10 2,4 6,2Z", "#E5304A", s=None, ol="#A8182E"))
+        o.append(part("M17,16 C19,20 20,22 20,24 C20,26 18,27 17,27 C15,27 14,26 14,24 C14,22 15,20 17,16Z", "#E5304A", s=None, ol="#A8182E"))
+    if scarf:
+        band = "M-40,12 C-20,26 20,26 40,12 L42,26 C20,42 -20,42 -42,26 Z"
+        stripes = "".join(part(f"M{x},0 L{x + 7},0 L{x + 7},80 L{x},80Z", "#FFFFFF", s=None, ol=False) for x in (-30, -12, 6, 24))
+        o.append(part("M12,30 L30,28 L36,70 L18,72 Z", "#4FB45A", s=(-2, -3)))
+        o.append(comp(band, "#4FB45A", stripes, s=(-3, -4)))
     if hat:
         o.append(g(tophat(), "translate(0 -60) rotate(-6)"))
     return "".join(o)
@@ -1019,6 +1046,16 @@ def cat(hat=False):
 @reg((-70, -100, 70, 104))
 def bear(hat=False):
     return critter("bear", hat)
+
+
+@reg((-74, -148, 74, 104))
+def rabbit2(scarf=False, juice=False):
+    return critter("rabbit", scarf=scarf, juice=juice)
+
+
+@reg((-70, -100, 108, 104))
+def squirrel():
+    return critter("squirrel")
 
 
 @reg((-92, -96, 96, 92))
@@ -1143,6 +1180,170 @@ def openbook(filled=5):
     return o
 
 
+
+
+# ---------------------------------------------------------------- round 2: nature pairs (drawn once, used as paper in 紙片森林)
+@reg((-64, -60, 62, 52))
+def bee():
+    o = []
+    for (cx, cy, rx, ry, a) in ((-2, -30, 15, 22, -24), (20, -30, 14, 20, 22)):
+        o.append(g(part(ell(0, 0, rx, ry), "#DDF3FF", s=None, ol="#7FB4D6"), f"translate({cx} {cy}) rotate({a})"))
+    body = ell(4, 10, 42, 31)
+    stripes = "".join(part(f"M{x},-40 L{x + 11},-40 L{x + 11},60 L{x},60Z", "#4A3426", s=None, ol=False) for x in (6, 28))
+    o.append(comp(body, YELLOW, stripes, s=(-7, -8), hl=hi("M-26,-6 C-22,-14 -14,-18 -6,-19", 4, .7)))
+    o.append(part("M44,4 L58,10 L44,16 Z", "#4A3426", s=None))
+    o.append(ln("M-22,-14 C-26,-30 -32,-40 -38,-46 M-12,-18 C-12,-34 -10,-44 -6,-52", "#4A3426", "o2"))
+    o.append(part(ell(-38, -47, 4.5), "#4A3426", s=None) + part(ell(-6, -53, 4.5), "#4A3426", s=None))
+    o.append(eye(-24, 4, 7.5, 9, -1, 1, ol="#4A3426") + eye(-6, 4, 7.5, 9, -1, 1, ol="#4A3426"))
+    o.append(ln("M-22,20 Q-15,26 -8,20", "#4A3426", "o2") + blush(-32, 18, 5, 3.5) + blush(3, 18, 5, 3.5))
+    return "".join(o)
+
+
+@reg((-54, -68, 54, 74))
+def flower(col="#FF8FB1"):
+    o = [part(tube([(0, 0, 4), (2, 36, 4), (0, 70, 4)]), "#4FB45A", s=None)]
+    o.append(part("M2,44 C14,30 34,30 42,38 C30,50 14,52 2,44 Z", GREEN, s=(-2, -3)))
+    o.append(part("M-2,58 C-14,44 -34,44 -42,52 C-30,64 -14,66 -2,58 Z", GREEN, s=(-2, -3)))
+    for i in range(6):
+        a = i * 60 - 90
+        o.append(g(part(ell(0, -26, 15, 22), col, s=(-3, -4)), f"translate(0 -16) rotate({a}) translate(0 26) translate(0 -26)"))
+    o.append(part(ell(0, -16, 17), YELLOW, s=(-3, -4), hl=hidot(-6, -22, 3)))
+    return o and "".join(o)
+
+
+@reg((-70, -74, 72, 62))
+def hen():
+    o = []
+    for x in (-6, 14):
+        o.append(ln(f"M{x},38 L{x},54 M{x - 8},58 L{x},54 L{x + 8},58", "#F29A2E", "o3"))
+    tail = "M30,-6 C40,-34 58,-48 68,-44 C66,-30 60,-18 52,-8 C64,-20 72,-16 72,-8 C66,6 52,12 40,12 Z"
+    o.append(part(tail, "#FFFFFF", s=(-3, -4), ol=WHITE_OL))
+    body = "M-44,-8 C-44,-40 -8,-44 18,-28 C40,-16 56,4 48,24 C40,44 8,48 -14,42 C-36,36 -46,16 -44,-8 Z"
+    o.append(part(body, "#FFFFFF", s=(-7, -8), ol=WHITE_OL))
+    o.append(part("M-2,4 C10,-8 32,-4 34,10 C30,24 10,28 -2,4 Z", "#F1EEF8", s=None, ol=WHITE_OL))
+    o.append(part("M-42,-36 C-46,-48 -40,-56 -34,-52 C-34,-62 -24,-64 -22,-54 C-18,-62 -8,-58 -12,-46 Z", RED, s=(-2, -3)))
+    o.append(part(ell(-30, -26, 22, 21), "#FFFFFF", s=(-3, -4), ol=WHITE_OL))
+    o.append(part("M-50,-26 L-64,-20 L-50,-15 Z", "#FFB020", s=None))
+    o.append(part("M-50,-12 C-54,-4 -48,4 -44,-2 C-44,-6 -46,-10 -50,-12 Z", RED, s=None))
+    o.append(eye(-34, -30, 6.5, 7.5, -1, .5, ol="#4A3346") + blush(-24, -16, 5, 3.5))
+    return "".join(o)
+
+
+@reg((-46, -50, 46, 44))
+def egg():
+    o = part(ell(0, 30, 42, 13), "#C98B4E", s=(-2, -3))
+    o += "".join(ln(f"M{x},{24 + (x % 3)} L{x + 12},{32 - (x % 4)}", "#8E5A2C", "o0") for x in range(-36, 30, 9))
+    o += part("M0,-44 C18,-44 30,-14 30,6 C30,24 16,34 0,34 C-16,34 -30,24 -30,6 C-30,-14 -18,-44 0,-44 Z", "#FFF4E2", s=(-6, -7), ol="#C9A77A",
+              hl=hi("M-18,-16 C-16,-26 -12,-32 -8,-35", 4, .9))
+    o += part(ell(0, 36, 40, 9), "#C98B4E", s=None)
+    return o
+
+
+@reg((-80, -64, 80, 70))
+def cow():
+    o = []
+    for sx in (-1, 1):
+        o.append(g(part(ell(0, 0, 22, 11), "#FFFFFF", s=(-2, -3), ol="#7A7088") + part(ell(2, 0, 12, 6), "#FFC2D1", s=None, ol=False),
+                   f"translate({sx * 56} -26) rotate({sx * -18})"))
+        o.append(part(f"M{sx * 22},-44 C{sx * 24},-58 {sx * 34},-62 {sx * 40},-58 C{sx * 34},-54 {sx * 32},-48 {sx * 32},-40 Z", "#F3E2BE", s=None))
+    head = ell(0, -8, 48, 46)
+    o.append(comp(head, "#FFFFFF", part("M-60,-60 L-6,-60 C-8,-40 -20,-24 -40,-22 C-52,-22 -60,-30 -60,-40Z", "#4A4250", s=None, ol=False),
+                  s=(-7, -8), ol="#7A7088"))
+    o.append(part(ell(0, 30, 40, 24), "#FFB6C6", s=(-4, -5)))
+    o.append(part(ell(-14, 30, 5, 6.5), "#C2607A", s=None, ol=False) + part(ell(14, 30, 5, 6.5), "#C2607A", s=None, ol=False))
+    o.append(eye(-20, -12, 9, 11, .5, 1, ol="#3A3040") + eye(20, -12, 9, 11, .5, 1, ol="#3A3040"))
+    o.append(ln("M-10,44 Q0,50 10,44", "#8A3A50", "o2"))
+    o.append(part(rr(-10, 54, 20, 16, 6), GOLD, s=(-2, -3)))
+    return "".join(o)
+
+
+@reg((-40, -72, 40, 64))
+def milk():
+    o = part("M-30,-36 L0,-62 L30,-36 Z", "#FFFFFF", s=None, ol="#5A86D6")
+    o += part(rr(-6, -72, 12, 12, 2), "#FFFFFF", s=None, ol="#5A86D6")
+    body = rr(-30, -36, 60, 96, 4)
+    o += comp(body, "#FFFFFF", part("M-40,10 L40,10 L40,70 L-40,70Z", "#5A9BEA", s=None, ol=False)
+              + part("M-40,4 C-20,-2 -10,14 6,8 C18,4 26,0 40,4 L40,14 L-40,14Z", "#5A9BEA", s=None, ol=False), s=(-6, -7), ol="#5A86D6")
+    o += part("M-8,-28 C0,-30 8,-24 6,-16 C4,-10 -4,-8 -10,-12 C-16,-16 -14,-26 -8,-28Z", "#3A3446", s=None, ol=False)
+    o += part("M14,-10 C20,-12 26,-6 24,0 C22,4 16,4 13,0 C10,-4 10,-8 14,-10Z", "#3A3446", s=None, ol=False)
+    o += part("M-22,-8 C-18,-10 -14,-6 -16,-2 C-18,2 -24,0 -24,-4Z", "#3A3446", s=None, ol=False)
+    o += hi("M-20,-26 L-20,0", 4, .7)
+    return o
+
+
+@reg((-80, -36, 80, 34))
+def berryplate():
+    """An empty plate: strawberry tops, a bitten strawberry, red juice."""
+    o = part(ell(0, 6, 74, 24), "#FFFFFF", s=(-5, -6), ol=WHITE_OL)
+    o += part(ell(0, 4, 50, 14), "#F1EEF8", s=None, ol="#C9C2DD")
+    o += part("M-34,6 C-28,-2 -16,0 -12,6 C-18,10 -28,12 -34,6Z", "#F05A6E", s=None, ol="#B8263E")
+    for cx, cy, a in ((-4, 0, -10), (24, 6, 18)):
+        o += g(part("M0,0 L-14,-4 L-6,-8 L-4,-16 L2,-8 L12,-12 L8,-2 L16,4 L4,4 L0,12 L-4,4 L-14,6 Z", GREEN, s=None)
+               + part(rr(-1.5, -18, 3, 10, 1.5), "#3E8C3A", s=None, ol=False), f"translate({cx} {cy}) rotate({a}) scale(.9)")
+    berry = "M30,-14 C42,-16 50,-8 48,4 C46,14 38,22 34,24 C28,20 20,12 18,2 C16,-8 22,-14 30,-14Z"
+    o += part(berry, "#F0394F", s=(-3, -4))
+    o += part(ell(46, -6, 8, 7), "#F1EEF8", s=None, ol="#C9C2DD") + part(ell(40, -14, 6), "#F1EEF8", s=None, ol=False)
+    o += "".join(part(ell(x, y, 1.3, 1.8), "#FFE48A", s=None, ol=False) for x, y in ((26, -4), (32, 6), (36, 14), (26, 8), (38, 2)))
+    for x, y in ((-40, 12), (-18, 12), (8, 14)):
+        o += part(ell(x, y, 2.6, 2), "#E5304A", s=None, ol=False)
+    return o
+
+
+# ---------------------------------------------------------------- the park map: buildings and trees
+@reg((-46, -62, 46, 46))
+def house(col="#FF8A8A", roof="#4F7FE8"):
+    o = part(rr(-36, -16, 72, 60, 6), col, s=(-6, -7))
+    o += part("M-46,-12 L0,-58 L46,-12 C48,-10 46,-6 42,-6 L-42,-6 C-46,-6 -48,-10 -46,-12Z", roof, s=(-5, -6))
+    o += part(rr(-10, 12, 20, 32, 9), "#8C5A3C", s=None) + part(ell(5, 30, 2.2), GOLD, s=None, ol=False)
+    o += part(rr(-30, 0, 16, 16, 4), "#CDEEFF", s=None, ol=lin(col)) + part(rr(14, 0, 16, 16, 4), "#CDEEFF", s=None, ol=lin(col))
+    return o
+
+
+@reg((-74, -86, 74, 52))
+def firestation():
+    red = "#F04A3E"
+    o = part(rr(30, -84, 30, 56, 5), red, s=(-3, -4)) + part("M24,-80 L45,-96 L66,-80Z", "#9B2E2A", s=None)
+    o += part(ell(45, -64, 8), GOLD, s=None)
+    o += part(rr(-66, -40, 132, 90, 8), red, s=(-9, -10), hl=hi("M-56,-30 L40,-30", 4, .45))
+    o += part("M-72,-38 L72,-38 L66,-58 L-66,-58 Z", "#9B2E2A", s=(-3, -4))
+    o += part(rr(-54, -8, 66, 58, 6), "#FFFFFF", s=None, ol=lin(red))
+    o += "".join(ln(f"M-54,{y} L12,{y}", "#C9C2DD", "o0") for y in (4, 16, 28, 40))
+    o += part(rr(26, -8, 26, 22, 4), "#CDEEFF", s=None, ol=lin(red))
+    o += part(rr(-30, -30, 60, 16, 5), "#FFFFFF", s=None, ol=lin(red))
+    o += part(star_d(6, 2.8, cx=0, cy=-22, round_=.15), GOLD, s=None, ol=False)
+    return o
+
+
+@reg((-50, -100, 50, 62))
+def ptree(col="#5DBB63", kind="round"):
+    o = part(rr(-8, 10, 16, 52, 6), "#9A6A3E", s=(-2, -3))
+    if kind == "round":
+        for (cx, cy, r, c) in ((-20, -16, 28, col), (20, -18, 28, col), (0, -44, 34, lt(col, .12)), (0, -6, 30, shd(col))):
+            o += part(ell(cx, cy, r), c, s=(-4, -5))
+    else:
+        for i, (y, w) in enumerate(((-6, 46), (-40, 38), (-70, 28))):
+            o += part(f"M{-w},{y + 18} L0,{y - 30} L{w},{y + 18} Z", tone(col, 1 - i * .06), s=(-4, -5))
+    return o
+
+
+@reg((-38, -40, 38, 40))
+def mushroom():
+    o = part(rr(-13, -6, 26, 44, 11), "#FFF3E0", s=(-3, -4), ol="#C9A77A")
+    cap = "M-36,2 C-38,-26 -18,-40 0,-40 C18,-40 38,-26 36,2 C20,8 -20,8 -36,2 Z"
+    o += comp(cap, "#F0473F", "".join(part(ell(x, y, r), "#FFFFFF", s=None, ol=False) for x, y, r in ((-18, -14, 6), (6, -26, 5.5), (18, -8, 6), (-2, -6, 4))),
+              s=(-5, -6))
+    return o
+
+
+@reg((-90, -40, 90, 40))
+def pond():
+    o = part("M-84,0 C-84,-26 -40,-36 0,-34 C44,-34 86,-24 86,2 C86,26 44,36 0,36 C-42,36 -84,26 -84,0Z", "#7CC7F0", s=(-6, -7))
+    o += part("M-60,-4 C-58,-18 -26,-22 0,-20 C30,-20 56,-14 58,0 C40,4 -40,6 -60,-4Z", "#A8DDF8", s=None, ol=False)
+    o += part("M30,10 A16,9 0 1 1 46,4 L34,6 Z", "#4FB45A", s=None)
+    o += part(ell(-34, 14, 12, 6), "#4FB45A", s=None) + part(ell(-34, 10, 5), "#FF8FB1", s=None)
+    return o
+
+
 # ================================================================ PAGE MACHINERY
 def tx(x, y, s, size=16, color=INK, anchor="middle", extra="", weight=""):
     w = f' font-weight="{weight}"' if weight else ""
@@ -1189,6 +1390,11 @@ def render(html, out, w, h, scale):
         p = pathlib.Path(tmp) / "page.html"
         p.write_text(html)
         subprocess.run(["node", str(HERE / "render.js"), str(p), str(out), str(w), str(h), str(scale)], check=True)
+    if pathlib.Path(out).stat().st_size > 1_000_000:
+        # paper grain makes big PNGs: keep them small with a 256-colour palette (the grain hides the dithering)
+        from PIL import Image
+        im = Image.open(out).convert("RGB")
+        im.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.FLOYDSTEINBERG).save(out, optimize=True)
 
 
 def items_sheet(names=None, style="A"):
@@ -1820,9 +2026,10 @@ def screen_next():
 
 
 # ---------------------------------------------------------------- 7 little detective (5-6 years)
-def grey_filter():
-    D.add("greyf", '<filter id="greyf"><feColorMatrix type="saturate" values=".12"/></filter>')
-    return "url(#greyf)"
+def grey_filter(sat=.12):
+    k = "greyf" + str(sat).replace(".", "_")
+    D.add(k, f'<filter id="{k}"><feColorMatrix type="saturate" values="{sat}"/></filter>')
+    return f"url(#{k})"
 
 
 def place_on(name, cx, base, s, **kw):
@@ -2040,9 +2247,590 @@ def contact_sheet(names):
     return f'<!doctype html><html><head><meta charset="utf-8"><style>{css}</style></head><body>{"".join(items)}</body></html>', w, h
 
 
+
+
+# ================================================================ ROUND 2: 想一想樂園 (three lands, three styles)
+# ---------------------------------------------------------------- style C drawings (flat shapes, no outlines)
+CR, CB, CY, CG, CP, CT = "#EF233C", "#3A86FF", "#FFBF1F", "#2EC46A", "#8338EC", "#2EC4B6"
+
+
+def c_circle(col=CR):
+    return f'<circle cx="0" cy="0" r="40" fill="{col}"/><circle cx="-14" cy="-14" r="8" fill="#FFFFFF" opacity=".55"/>'
+
+
+def c_square(col=CB):
+    return f'<rect x="-38" y="-38" width="76" height="76" rx="8" fill="{col}"/><rect x="-26" y="-26" width="14" height="14" rx="3" fill="#FFFFFF" opacity=".5"/>'
+
+
+def c_triangle(col=CY):
+    return f'<path d="M0,-40 L42,34 L-42,34Z" fill="{col}" stroke="{col}" stroke-width="8" stroke-linejoin="round"/>'
+
+
+def c_engine():
+    return (f'<path d="M-86,30 L-70,6 L-58,6 L-58,30Z" fill="{CY}"/>'
+            f'<rect x="-74" y="4" width="160" height="14" rx="4" fill="{C_DK}"/>'
+            f'<rect x="-66" y="-40" width="86" height="46" fill="{CR}"/><circle cx="-66" cy="-17" r="23" fill="{CR}"/>'
+            f'<circle cx="-72" cy="-17" r="7" fill="{CY}"/>'
+            f'<rect x="-56" y="-70" width="22" height="30" fill="{C_DK}"/><rect x="-62" y="-80" width="34" height="12" rx="3" fill="{C_DK}"/>'
+            f'<circle cx="-4" cy="-40" r="11" fill="{CY}"/>'
+            f'<rect x="18" y="-74" width="64" height="80" rx="6" fill="{CB}"/><rect x="12" y="-86" width="76" height="16" rx="5" fill="#2557C9"/>'
+            f'<rect x="34" y="-60" width="32" height="26" rx="5" fill="#FFFFFF"/>'
+            + "".join(f'<circle cx="{x}" cy="24" r="{r}" fill="{C_DK}"/><circle cx="{x}" cy="24" r="{r * .42:.1f}" fill="{CY}"/>'
+                      for x, r in ((-46, 15), (-12, 15), (50, 21))))
+
+
+def c_wagon(col=CY):
+    return (f'<rect x="-40" y="-2" width="10" height="6" fill="{C_DK}"/><rect x="-32" y="-12" width="64" height="24" rx="4" fill="{col}"/>'
+            f'<circle cx="-17" cy="16" r="10" fill="{C_DK}"/><circle cx="17" cy="16" r="10" fill="{C_DK}"/>'
+            f'<circle cx="-17" cy="16" r="4" fill="#FFFFFF"/><circle cx="17" cy="16" r="4" fill="#FFFFFF"/>')
+
+
+def c_car():
+    return (f'<rect x="-84" y="-24" width="172" height="44" rx="14" fill="{CB}"/>'
+            f'<path d="M-46,-24 L-30,-62 L28,-62 L50,-24Z" fill="{CB}" stroke="{CB}" stroke-width="10" stroke-linejoin="round"/>'
+            f'<path d="M-30,-28 L-20,-52 L-4,-52 L-4,-28Z" fill="#FFFFFF"/><path d="M6,-28 L6,-52 L24,-52 L38,-28Z" fill="#FFFFFF"/>'
+            f'<rect x="74" y="-16" width="12" height="9" rx="3" fill="{CY}"/><rect x="-86" y="-16" width="10" height="9" rx="3" fill="{CR}"/>'
+            f'<circle cx="-46" cy="20" r="21" fill="{C_DK}"/><circle cx="50" cy="20" r="21" fill="{C_DK}"/>'
+            f'<circle cx="-46" cy="20" r="8" fill="#FFFFFF"/><circle cx="50" cy="20" r="8" fill="#FFFFFF"/>')
+
+
+def c_watermelon():
+    return (f'<path d="M-78,-20 A78,78 0 0 0 78,-20Z" fill="{CG}"/>'
+            f'<path d="M-68,-20 A68,68 0 0 0 68,-20Z" fill="#FFF4E2"/>'
+            f'<path d="M-62,-20 A62,62 0 0 0 62,-20Z" fill="#FF4D6D"/>'
+            + "".join(f'<ellipse cx="{x}" cy="{y}" rx="4.5" ry="7" fill="{C_DK}" transform="rotate({x * .5} {x} {y})"/>'
+                      for x, y in ((-34, 0), (-12, 8), (12, 8), (34, 0), (-22, 22), (0, 30), (22, 22))))
+
+
+def c_banana():
+    return ('<g transform="rotate(-18)">'
+            f'<path d="M-72,-24 A76,76 0 0 0 72,-24 A112,112 0 0 1 -72,-24Z" fill="{CY}"/>'
+            f'<rect x="-84" y="-34" width="16" height="16" rx="3" fill="{C_BR}" transform="rotate(30 -76 -26)"/>'
+            f'<rect x="68" y="-30" width="10" height="10" rx="2" fill="{C_BR}"/>'
+            f'<path d="M-50,-4 A60,60 0 0 0 40,4" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity=".45"/></g>')
+
+
+def c_castle():
+    o = [f'<rect x="-70" y="-40" width="140" height="90" fill="#FF8FAB"/>']
+    for x in (-70, -42, -14, 14, 42):
+        o.append(f'<rect x="{x}" y="-52" width="18" height="14" fill="#FF8FAB"/>')
+    for x, c in ((-86, CP), (62, CP)):
+        o.append(f'<rect x="{x}" y="-70" width="24" height="120" fill="{c}"/><path d="M{x - 6},-70 L{x + 12},-104 L{x + 30},-70Z" fill="{CB}"/>'
+                 f'<rect x="{x + 6}" y="-50" width="12" height="16" rx="6" fill="#FFFFFF"/>')
+    o.append(f'<rect x="-22" y="-96" width="44" height="60" fill="{CY}"/><path d="M-30,-96 L0,-136 L30,-96Z" fill="{CR}"/>'
+             f'<rect x="-1" y="-160" width="3" height="26" fill="{C_DK}"/><path d="M2,-160 L22,-153 L2,-146Z" fill="{CT}"/>'
+             f'<path d="M-20,50 L-20,16 A20,20 0 0 1 20,16 L20,50Z" fill="{C_DK}"/>'
+             f'<circle cx="0" cy="-66" r="9" fill="#FFFFFF"/>')
+    return "".join(o)
+
+
+def c_tower(cols=(CB, CY, CR, CG)):
+    o = []
+    y = 40
+    for i, c in enumerate(cols):
+        w = 44 - i * 4
+        o.append(f'<rect x="{-w / 2}" y="{y - 26}" width="{w}" height="26" rx="3" fill="{c}"/>')
+        y -= 27
+    o.append(f'<path d="M-20,{y + 1} L0,{y - 26} L20,{y + 1}Z" fill="{CP}"/>')
+    return "".join(o)
+
+
+C_ITEMS.update({"circle": (c_circle, (-42, -42, 42, 42)), "square": (c_square, (-40, -40, 40, 40)),
+                "triangle": (c_triangle, (-48, -46, 48, 40)), "engine": (c_engine, (-88, -88, 90, 46)),
+                "wagon": (c_wagon, (-42, -14, 34, 28)), "car": (c_car, (-90, -68, 92, 42)),
+                "watermelon": (c_watermelon, (-80, -22, 80, 60)), "banana": (c_banana, (-88, -60, 84, 56)),
+                "castle": (c_castle, (-92, -162, 92, 52)), "tower": (c_tower, (-24, -96, 24, 42))})
+
+
+def place_c(name, cx, cy, w, h, **kw):
+    f, (x0, y0, x1, y1) = C_ITEMS[name]
+    s = min(w / (x1 - x0), h / (y1 - y0))
+    return f'<g transform="translate({cx} {cy}) scale({s:.4f}) translate({-(x0 + x1) / 2} {-(y0 + y1) / 2})">{f(**kw)}</g>'
+
+
+# ---------------------------------------------------------------- style C screen pieces (flat, no outlines)
+C_BG, C_DOT, C_SH = "#EEF0FF", "#C9CCF2", "#D5D8F5"
+
+
+def c_grid(x0, y0, x1, y1, col=C_DOT, step=18):
+    return "".join(f'<circle cx="{x}" cy="{y}" r="1.7" fill="{col}"/>' for x in range(x0, x1, step) for y in range(y0, y1, step))
+
+
+def c_box(x, y, w, h, r=18, fill="#FFFFFF", sh=C_SH, dy=6):
+    return f'<rect x="{x}" y="{y + dy}" width="{w}" height="{h}" rx="{r}" fill="{sh}"/><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" fill="{fill}"/>'
+
+
+def c_header(title, col):
+    o = c_box(16, 22, 48, 48, 12, CB, "#2557C9", 4) + ic(i_home("#FFFFFF"), 40, 46, .95)
+    w = len(title) * 22 + 40
+    o += c_box(195 - w / 2, 26, w, 42, 12, col, tone(col, .78), 4)
+    o += tx(195, 55, title, 22, "#FFFFFF")
+    return o
+
+
+def c_bubble(x, y, w, h, side=None, at=0, r=16):
+    d = bubble_d(x, y, w, h, r, side, at, 16, 12)
+    return f'<path d="{d}" fill="{C_SH}" transform="translate(0 6)"/><path d="{d}" fill="#FFFFFF"/>'
+
+
+def c_ask(y, text, size=24):
+    o = c_bubble(20, y, 350, 72)
+    o += f'<circle cx="58" cy="{y + 36}" r="23" fill="{CT}"/>' + ic(i_speaker(), 58, y + 36, .95)
+    return o + tx(92, y + 36 + size * .36, text, size, C_DK, "start")
+
+
+def c_dots(cx, y, n, k, col=CP, gap=20):
+    x0 = cx - (n - 1) * gap / 2
+    return "".join(f'<rect x="{x0 + i * gap - (8 if i == k else 6)}" y="{y - (8 if i == k else 6)}" width="{16 if i == k else 12}" '
+                   f'height="{16 if i == k else 12}" rx="3" fill="{col if i <= k else "#D5D8F5"}" opacity="{.45 if i == k else 1}"/>' for i in range(n))
+
+
+def c_check(cx, cy, r=18):
+    return f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{CG}"/>' + ic(i_check(), cx, cy, r / 18)
+
+
+# ---------------------------------------------------------------- style B screen pieces (paper)
+B_BG = "#EFE2C8"
+
+
+def paper(d, fill, rough=1.0, extra="", op=None):
+    o_ = f' opacity="{op}"' if op is not None else ""
+    return f'<path d="{d}" fill="{mute(fill)}" filter="{paper_filter(rough)}"{o_} {extra}/>'
+
+
+def paper_g(inner, rough=1.0):
+    return f'<g filter="{paper_filter(rough)}">{inner}</g>'
+
+
+def tape(cx, cy, w=34, a=-8):
+    return (f'<rect x="{cx - w / 2}" y="{cy - 7}" width="{w}" height="14" fill="#FFF6D8" opacity=".75" '
+            f'transform="rotate({a} {cx} {cy})" filter="{paper_filter(.6)}"/>')
+
+
+def b_bg(hills=True, top="#EFE2C8", bottom="#E9D9BC"):
+    o = f'<rect width="{W}" height="{H}" fill="{lg([(0, top), (1, bottom)])}"/>'
+    o += f'<rect width="{W}" height="{H}" fill="#FFFFFF" opacity=".28" filter="{paper_bg()}"/>'
+    if hills:
+        for y, c, a in ((732, "#B8D59A", 22), (764, "#9CC77F", 16), (800, "#86B86C", 12)):
+            d = "M0,{} ".format(y) + " ".join(f"Q{x + 32},{y - a} {x + 65},{y}" for x in range(0, 390, 65)) + f" L390,{H} L0,{H}Z"
+            o += paper(d, c, 1.4)
+    return o
+
+
+def b_home(cx=40, cy=46):
+    return paper(ell(cx, cy, 24), "#FFF6E4") + paper_g(i_home("#8C6A4A").replace("<path", f'<path transform="translate({cx} {cy}) scale(.95)"'), .8)
+
+
+def b_label(text, cx, cy, col="#F6D77A", size=22, tc=INK):
+    w = len(text) * size + 40
+    o = paper(rr(cx - w / 2, cy - 21, w, 42, 6), col, 1.3)
+    o += tx(cx, cy + size * .36, text, size, tc)
+    return o + tape(cx - w / 2 + 6, cy - 18, 30, -24) + tape(cx + w / 2 - 6, cy - 18, 30, 24)
+
+
+def b_bubble(x, y, w, h, side=None, at=0, r=22):
+    return paper(bubble_d(x, y, w, h, r, side, at, 16, 13), "#FFFDF6", 1.8)
+
+
+def b_speaker(cx, cy, r=23):
+    return paper(ell(cx, cy, r), "#5FC2B4") + i_speaker().replace('<g transform="translate(-2 0)">', f'<g transform="translate({cx - 2} {cy}) scale(.95)">')
+
+
+def b_ask(y, text, size=24):
+    return b_bubble(20, y, 350, 74) + b_speaker(58, y + 37) + tx(92, y + 37 + size * .36, text, size, INK, "start")
+
+
+def b_card(x, y, w, h, rot=0, col="#FFFBF2", frame=None):
+    o = ""
+    if frame:
+        o += paper(rr(x - 6, y - 6, w + 12, h + 12, 12), frame, 1.4)
+    o += paper(rr(x, y, w, h, 10), col, 1.2)
+    return f'<g transform="rotate({rot} {x + w / 2} {y + h / 2})">{o}</g>' if rot else o
+
+
+def b_check(cx, cy, r=16):
+    return paper(ell(cx, cy, r), "#5DBB63") + ic(i_check(), cx, cy, r / 18)
+
+
+def b_dots(cx, y, n, k, col="#E8873A", gap=20):
+    x0 = cx - (n - 1) * gap / 2
+    return "".join(paper(ell(x0 + i * gap, y, 8 if i == k else 6), col if i <= k else "#FFFBF2", .8) for i in range(n))
+
+
+def b_strip(p0, p1, col, bow=16, w=10):
+    (x0, y0), (x1, y1) = p0, p1
+    dx, dy = x1 - x0, y1 - y0
+    l_ = math.hypot(dx, dy)
+    bx, by = -dy / l_ * bow, dx / l_ * bow
+    d = f"M{x0},{y0} C{x0 + dx * .33 + bx:.1f},{y0 + dy * .33 + by:.1f} {x0 + dx * .66 + bx:.1f},{y0 + dy * .66 + by:.1f} {x1},{y1}"
+    return (f'<path d="{d}" stroke="{mute(col)}" stroke-width="{w}" fill="none" stroke-linecap="butt" filter="{paper_filter(1.3)}"/>'
+            + paper(ell(x0, y0, 10), col) + paper(ell(x1, y1, 10), col)
+            + paper(ell(x0, y0, 3.5), "#FFFFFF", .6) + paper(ell(x1, y1, 3.5), "#FFFFFF", .6))
+
+
+def fox_style(style, cx, cy, w, h, **kw):
+    """阿布 drawn in a land's style: A cartoon, B paper, C blocks."""
+    global STYLE
+    if style == "C":
+        return place_c("fox", cx, cy, w, h)
+    STYLE = style
+    o = place("fox", cx, cy, w, h, **kw)
+    STYLE = "A"
+    return o
+
+
+def in_b(fn, *a, **kw):
+    """Run a drawing call in paper style."""
+    global STYLE
+    STYLE = "B"
+    o = fn(*a, **kw)
+    STYLE = "A"
+    return o
+
+
+# ---------------------------------------------------------------- the three land gates
+def arch_a(cx, base, w, h, name, stars=2, size=17):
+    pw = 14
+    o = ""
+    for sx in (-1, 1):
+        x = cx + sx * (w / 2 - pw / 2) - pw / 2
+        o += f'<path d="{rr(x, base - h + 20, pw, h - 20, 5)}" fill="#FF8A8A" stroke="{lin("#FF8A8A")}" stroke-width="2"/>'
+        o += "".join(f'<path d="M{x},{y} L{x + pw},{y - 7}" stroke="#FFFFFF" stroke-width="3"/>' for y in range(int(base - h + 40), int(base), 14))
+    bw, bh = w + 16, 44
+    o += lipbox(cx - bw / 2, base - h, bw, bh, 14, YELLOW, lipd=4, sw=2)
+    o += tx(cx, base - h + 22, name, size, INK)
+    o += "".join(star_icon(cx + (k - 1) * 17, base - h + 34, 6, k < stars) for k in range(3))
+    return o
+
+
+def arch_b(cx, base, w, h, name, stars=2, size=17):
+    o = ""
+    for sx in (-1, 1):
+        x = cx + sx * (w / 2 - 8)
+        o += paper(rr(x - 7, base - h + 20, 14, h - 20, 4), "#A07A52", 1.2)
+        o += paper(ell(x, base - h + 18, 22, 18), "#7DBB6A", 1.4)
+    bw = w + 14
+    o += paper(rr(cx - bw / 2, base - h, bw, 46, 8), "#F6D77A", 1.4)
+    o += tx(cx, base - h + 22, name, size, INK)
+    o += "".join(paper(star_d(6.5, 3, cx=cx + (k - 1) * 17, cy=base - h + 34, round_=.12), "#F2B33D" if k < stars else "#FFFBF2", .7) for k in range(3))
+    o += tape(cx - bw / 2 + 8, base - h + 4, 26, -30)
+    return o
+
+
+def arch_c(cx, base, w, h, name, stars=2, size=17):
+    o = ""
+    for sx in (-1, 1):
+        x = cx + sx * (w / 2 - 9) - 9
+        for i, c in enumerate((CB, CY, CR, CG)):
+            o += f'<rect x="{x}" y="{base - (i + 1) * (h - 40) / 4}" width="18" height="{(h - 40) / 4 - 1:.1f}" rx="2" fill="{c}"/>'
+    bw = w + 14
+    o += f'<rect x="{cx - bw / 2}" y="{base - h + 4}" width="{bw}" height="44" rx="6" fill="{tone(CP, .8)}"/>'
+    o += f'<rect x="{cx - bw / 2}" y="{base - h}" width="{bw}" height="44" rx="6" fill="{CP}"/>'
+    o += tx(cx, base - h + 22, name, size, "#FFFFFF")
+    o += "".join(f'<path d="{star_d(6.5, 3, cx=cx + (k - 1) * 17, cy=base - h + 34)}" fill="{CY if k < stars else "#B79AF0"}"/>' for k in range(3))
+    return o
+
+
+# ---------------------------------------------------------------- 13 積木王國: what comes next? (style C)
+def screen_c_next():
+    o = [f'<rect width="{W}" height="{H}" fill="{C_BG}"/>', c_grid(9, 9, 390, 844)]
+    o.append(f'<circle cx="332" cy="226" r="26" fill="{CY}"/>')
+    o.append(f'<path d="M-40,410 A110,110 0 0 1 180,410Z" fill="#B8EBC8"/><path d="M150,410 A90,90 0 0 1 330,410Z" fill="#A3E3B6"/>'
+             f'<path d="M290,410 A80,80 0 0 1 450,410Z" fill="#B8EBC8"/>')
+    o.append(f'<rect x="0" y="406" width="{W}" height="48" fill="#CFF3D9"/>')
+    o.append("".join(f'<rect x="{x}" y="408" width="12" height="10" fill="#C99A6B"/>' for x in range(-4, 400, 22)))
+    o.append(f'<rect x="0" y="405" width="{W}" height="5" fill="{C_DK}"/>')
+    o.append(place_c("engine", 34, 369, 104, 86))
+    cargo = ["circle", "square", "circle", "square", "circle", None]
+    cols = [CY, CG, "#FF8FAB", CT, "#FF9F43", CP]
+    for i, cg in enumerate(cargo):
+        cx = 114 + i * 49.6
+        o.append(place_c("wagon", cx, 389, 52, 30, col=cols[i]))
+        if cg == "circle":
+            o.append(place_c("circle", cx, 361, 34, 34))
+        elif cg == "square":
+            o.append(place_c("square", cx, 361, 32, 32))
+        else:
+            o.append(f'<rect x="{cx - 19}" y="342" width="38" height="38" rx="6" fill="#FFFFFF" stroke="{CP}" stroke-width="2.5" stroke-dasharray="5 4"/>'
+                     + tx(cx, 370, "?", 26, CP))
+    o.append(f'<rect x="0" y="454" width="{W}" height="{H - 454}" fill="{C_BG}"/>' + c_grid(9, 459, 390, 844))
+    o.append(c_header("接下來是什麼？", CP))
+    o.append(c_ask(90, "下一個是什麼呢？"))
+    o.append(tx(195, 500, "選一個放上火車", 15, "#6E6A99"))
+    for i, (n, kw) in enumerate((("square", {}), ("circle", {}), ("triangle", {}))):
+        x = 22 + i * 120
+        o.append(c_box(x, 516, 106, 132, 18))
+        o.append(place_c(n, x + 53, 582, 66, 66, **kw))
+    o.append(place_c("fox", 64, 746, 112, 124))
+    o.append(c_bubble(130, 704, 242, 76, "left", 742))
+    o.append(tx(251, 736, "圓形、方形、", 19, C_DK) + tx(251, 764, "圓形、方形……", 19, C_DK))
+    o.append(c_dots(195, 826, 5, 1))
+    return page("".join(o), C_BG)
+
+
+# ---------------------------------------------------------------- 14 積木王國: which one is different? (style C)
+def screen_c_odd():
+    bg = "#FFF5DE"
+    o = [f'<rect width="{W}" height="{H}" fill="{bg}"/>', c_grid(9, 9, 390, 844, "#F0D9A8")]
+    o.append(c_header("哪個不一樣？", CG))
+    o.append(f'<circle cx="350" cy="46" r="24" fill="{CT}"/>' + ic(i_speaker(), 350, 46, .9))
+    cards = [("apple", 22, 96), ("watermelon", 202, 96), ("banana", 22, 330), ("car", 202, 330)]
+    for n, x, y in cards:
+        if n == "car":
+            o.append(f'<rect x="{x - 7}" y="{y - 7}" width="180" height="234" rx="24" fill="{CY}"/>')
+            o.append(c_box(x, y, 166, 220, 18, "#FFFFFF", "#FFFFFF", 0))
+        else:
+            o.append(c_box(x, y, 166, 220, 18, "#FFFFFF", "#F2E2BF"))
+        o.append(place_c(n, x + 83, y + 110, 124, 140))
+    o.append(f'<path d="{star_d(36, 26, 10, 352, 340, -90)}" fill="{CY}"/>' + c_check(352, 340, 20))
+    for sx, sy, r in ((230, 368, 8), (350, 520, 9), (240, 524, 6)):
+        o.append(f'<path d="{star_d(r, r * .45, 4, sx, sy, -90)}" fill="#FF9F43"/>')
+    o.append(place_c("fox", 76, 716, 132, 160))
+    o.append(c_bubble(162, 628, 210, 132, "left", 700))
+    o.append(tx(267, 680, "對了！", 28, CG))
+    o.append(tx(267, 724, "汽車不是水果！", 21, C_DK))
+    o.append(c_dots(195, 822, 5, 3, CG))
+    return page("".join(o), bg)
+
+
+# ---------------------------------------------------------------- 10 the park map (new home screen)
+def sign_a(cx, y, text, size=14):
+    w = len(text) * size + 22
+    return (f'<rect x="{cx - 4}" y="{y + 26}" width="8" height="20" rx="3" fill="#B97A48" stroke="{lin("#B97A48")}" stroke-width="1.8"/>'
+            + lipbox(cx - w / 2, y, w, 30, 10, "#FFFFFF", lin("#FF9F4A"), "#FFD2A6", 3, 2)
+            + tx(cx, y + 20.5, text, size, INK))
+
+
+def sign_b(cx, y, text, size=14):
+    w = len(text) * size + 22
+    return (paper(rr(cx - 3.5, y + 24, 7, 22, 2), "#9A6A3E", .8) + paper(rr(cx - w / 2, y, w, 30, 5), "#FFF8E6", 1.2)
+            + tx(cx, y + 20.5, text, size, INK) + tape(cx, y + 1, 22, -6))
+
+
+def sign_c(cx, y, text, size=14):
+    w = len(text) * size + 22
+    return (f'<rect x="{cx - 4}" y="{y + 26}" width="8" height="20" fill="{C_DK}"/>'
+            + c_box(cx - w / 2, y, w, 30, 6, "#FFFFFF", "#C5C9F2", 3) + tx(cx, y + 20.5, text, size, C_DK))
+
+
+MAP_PATH = [(205, 880), (205, 806), (160, 750), (116, 700), (146, 646), (236, 610), (298, 566), (284, 512), (200, 482),
+            (122, 456), (104, 410), (146, 368), (226, 344), (282, 316), (314, 296)]
+
+
+def screen_map():
+    o = []
+    # one sky over the whole park
+    o.append(f'<rect width="{W}" height="{H}" fill="{lg([(0, "#CBE9FF"), (.3, "#E6F4FF"), (1, "#EAF6FF")])}"/>')
+    o.append(soft_clouds([(40, 196, .45), (360, 186, .4), (210, 172, .35)], .9))
+    # 積木王國 ground: block tiles
+    o.append(f'<rect x="0" y="232" width="{W}" height="176" fill="#E4E1FA"/>')
+    o.append("".join(f'<rect x="{x}" y="{y}" width="24" height="24" rx="3" fill="#D8D3F6"/>'
+                     for y in range(236, 400, 28) for x in range(2 + (14 if (y // 28) % 2 else 0), 390, 56)))
+    cols = [CB, CY, CR, CG]
+    o.append("".join(f'<rect x="{x}" y="226" width="20" height="10" rx="2" fill="{cols[(x // 22) % 4]}"/>' for x in range(0, 390, 22)))
+    # 卡通城 ground: cartoon grass
+    o.append(f'<rect x="0" y="590" width="{W}" height="{H - 590}" fill="#A8E38E"/>')
+    for x, y in ((24, 802), (370, 640), (240, 700), (300, 820), (130, 812), (60, 600 + 120)):
+        o.append(f'<path d="M{x - 8},{y} Q{x - 6},{y - 9} {x - 2},{y - 2} Q{x},{y - 12} {x + 3},{y - 2} Q{x + 7},{y - 9} {x + 9},{y}" fill="none" stroke="#6DBE57" stroke-width="2" stroke-linecap="round"/>')
+    # 紙片森林 ground: paper, torn top, grass-blade paper edge at the bottom
+    top = "M-10,402 " + " ".join(f"Q{x + 30},{392 + (6 if (x // 60) % 2 else -2)} {x + 60},{400}" for x in range(-10, 400, 60))
+    blades = " ".join(f"L{x + 6},{618 + (k % 3) * 4} L{x + 12},{602}" for k, x in enumerate(range(400, -20, -12)))
+    forest = top + f" L400,602 {blades} Z"
+    o.append(paper(forest, "#A9D08E", 1.6))
+    o.append(paper("M-10,470 C60,446 130,470 170,500 C120,520 40,520 -10,516Z", "#BBDB9F", 1.3))
+    o.append(paper("M240,420 C300,404 360,410 400,426 L400,470 C340,470 280,452 240,420Z", "#97C47C", 1.3))
+    # the shared path
+    d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in spline(MAP_PATH, 8))
+    o.append(f'<path d="{d}" fill="none" stroke="#D9B87C" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>'
+             f'<path d="{d}" fill="none" stroke="#FAE8C2" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>'
+             f'<path d="{d}" fill="none" stroke="#EFD49E" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 15"/>')
+    # 積木王國 (style C)
+    o.append(place_c("castle", 318, 222, 132, 158))
+    o.append(place_c("tower", 30, 286, 40, 110, cols=(CR, CB, CY, CG)))
+    o.append(f'<rect x="196" y="384" width="194" height="5" fill="{C_DK}"/>'
+             + "".join(f'<rect x="{x}" y="386" width="8" height="6" fill="#C99A6B"/>' for x in range(200, 390, 16)))
+    o.append(place_c("engine", 236, 366, 64, 40))
+    o.append(place_c("wagon", 286, 377, 44, 24, col=CY) + place_c("circle", 288, 362, 16, 16)
+             + place_c("wagon", 330, 377, 44, 24, col=CG) + place_c("square", 332, 362, 15, 15))
+    o.append(sign_c(120, 248, "哪個不一樣？"))
+    o.append(sign_c(214, 280, "接下來是什麼？"))
+    # 紙片森林 (style B)
+    o.append(in_b(place, "pond", 62, 560, 112, 50))
+    for x, y, sz, k, c in ((352, 444, 64, "pine", "#6BAF62"), (382, 470, 48, "round", "#7DBB6A"), (24, 466, 46, "pine", "#5FA35A")):
+        o.append(in_b(place, "ptree", x, y, sz, sz * 1.45, kind=k, col=c))
+    o.append(in_b(place, "mushroom", 350, 556, 40, 40))
+    o.append(sign_b(140, 492, "連連看"))
+    o.append(sign_b(242, 418, "小偵探"))
+    # 卡通城 (style A)
+    o.append(place("house", 34, 652, 56, 60, sw=1.8))
+    o.append(place("house", 80, 668, 46, 50, sw=1.8, col="#FFD166", roof="#FF7A6E"))
+    o.append(place("firestation", 318, 690, 128, 118, sw=1.8))
+    for x, y in ((250, 760), (372, 760), (26, 742)):
+        o.append(f'<circle cx="{x}" cy="{y}" r="13" fill="#6CCB5F" stroke="{lin("#6CCB5F")}" stroke-width="1.8"/>'
+                 f'<circle cx="{x + 12}" cy="{y + 3}" r="10" fill="#6CCB5F" stroke="{lin("#6CCB5F")}" stroke-width="1.8"/>')
+    o.append(sign_a(62, 726, "放哪裡？"))
+    o.append(sign_a(318, 770, "是誰的？"))
+    # the three gates on the path
+    o.append(arch_c(108, 410, 92, 88, "積木王國", 1, 15))
+    o.append(arch_b(244, 614, 92, 88, "紙片森林", 1, 15))
+    o.append(arch_a(205, 802, 92, 96, "卡通城", 2, 15))
+    # 阿布 at the way in
+    o.append(f'<ellipse cx="205" cy="838" rx="34" ry="5" fill="#7DBE6A" opacity=".5"/>')
+    o.append(place("fox", 207, 796, 90, 92, sw=1.8))
+    # title: a rainbow park sign
+    for i, c in enumerate(("#FF7A6E", "#FFD166", "#7CC7FF")):
+        o.append(f'<path d="M{70 + i * 9},124 A{125 - i * 9},{98 - i * 8} 0 0 1 {320 - i * 9},124" fill="none" stroke="{c}" stroke-width="9"/>')
+    o.append(f'<path d="{cloud_d(70, 122, .5)}" fill="#FFFFFF" stroke="#C9DDF0" stroke-width="2"/>'
+             f'<path d="{cloud_d(322, 122, .5)}" fill="#FFFFFF" stroke="#C9DDF0" stroke-width="2"/>')
+    o.append(lipbox(84, 58, 222, 58, 22, "#FFFFFF", lin(FOX), "#FFD2A6", 5, 2.4))
+    o.append(tx(195, 99, "想一想樂園", 34, FOX, extra=f'stroke="{lin(FOX)}" stroke-width="1.6" paint-order="stroke"'))
+    o.append(f'<rect x="300" y="12" width="74" height="32" rx="16" fill="#ECEEF3" stroke="#C9CDD6" stroke-width="1.5"/>'
+             + ic(i_lock("#9AA0AE"), 320, 28, .8) + tx(350, 34, "家長", 14, "#8D93A1"))
+    o.append(lipbox(12, 796, 132, 40, 20, "#2EB5A8", lipd=4))
+    o.append(place("handbook", 34, 816, 24, 30, sw=1.4))
+    o.append(tx(92, 822, "偵探手冊", 16, "#FFFFFF", extra=f'stroke="{lin("#2EB5A8")}" stroke-width="3" paint-order="stroke"'))
+    return page("".join(o), "#EAF6FF")
+
+
+# ---------------------------------------------------------------- 11 紙片森林: draw a line between pairs (style B)
+def screen_b_link():
+    o = [b_bg()]
+    o.append(b_home())
+    o.append(b_label("連連看", 195, 47, "#F6D77A"))
+    o.append(b_ask(88, "誰和誰是一對？"))
+    left = ["bee", "hen", "cow", "raincloud"]
+    right = ["egg", "umbrella", "flower", "milk"]
+    rows = [184 + i * 130 for i in range(4)]
+    cw, ch, lx, rx = 116, 112, 24, 250
+    for i, y in enumerate(rows):
+        o.append(b_card(lx, y, cw, ch, (-1.5, 1.2, -1, 1.4)[i], frame="#F6C85A" if i == 0 else None))
+        o.append(in_b(place, left[i], lx + cw / 2, y + ch / 2, cw - 28, ch - 26))
+        o.append(b_card(rx, y, cw, ch, (1.3, -1.2, 1.6, -1)[i], frame="#F6C85A" if i == 2 else None))
+        o.append(in_b(place, right[i], rx + cw / 2, y + ch / 2, cw - 28, ch - 26))
+        if i:
+            o.append(paper(ell(lx + cw + 12, y + ch / 2, 6), "#FFFBF2", .7))
+        if i != 2:
+            o.append(paper(ell(rx - 12, y + ch / 2, 6), "#FFFBF2", .7))
+    o.append(b_strip((lx + cw + 12, rows[0] + ch / 2), (rx - 12, rows[2] + ch / 2), "#F08A4B"))
+    o.append(fox_style("B", 64, 764, 112, 124, look=(3, 0)))
+    o.append(b_bubble(140, 726, 196, 62, "left", 758, 20))
+    o.append(tx(238, 765, "蜜蜂喜歡花！", 19, INK))
+    o.append(b_dots(195, 822, 4, 1))
+    return page("".join(o), B_BG)
+
+
+# ---------------------------------------------------------------- 12 紙片森林: who ate the strawberry? (style B)
+def i_scarf():
+    return (part("M-20,-8 C-8,0 8,0 20,-8 L21,2 C8,10 -8,10 -21,2 Z", "#4FB45A", s=None)
+            + part("M4,4 L13,3 L16,20 L7,21 Z", "#4FB45A", s=None))
+
+
+def screen_b_detective():
+    o = [b_bg()]
+    o.append(b_home())
+    o.append(b_label("小偵探", 195, 47, "#CDB8F2"))
+    o.append(paper(rr(284, 31, 98, 30, 6), "#FFE08A", .9) + tx(333, 51, "4 歲半～5 歲", 13, "#7A5200"))
+    o.append(b_ask(88, "誰吃掉了草莓？"))
+    o.append(in_b(place, "berryplate", 322, 124, 76, 38))
+    # line-up on a paper board
+    o.append(paper(rr(14, 180, 362, 290, 14), "#FFF8EA", 1.3))
+    o.append("".join(paper(f"M30,{y} L360,{y} L360,{y + 3} L30,{y + 3}Z", "#EADCC0", .6) for y in (236, 290, 344, 398)))
+    o.append(paper(rr(14, 416, 362, 54, 10), "#E8F0D6", 1.2))
+    base, s = 432, .7
+    sus = [("rabbit2", {"scarf": True}, 76), ("rabbit2", {"juice": True}, 192), ("squirrel", {}, 312)]
+    for i, (n, kw, cx) in enumerate(sus):
+        art = in_b(place_on, n, cx, base, s, **kw)
+        if i == 1:
+            o.append(art)
+        else:
+            o.append(f'<g filter="{grey_filter(.55)}" opacity=".62">{art}</g>')
+            bx = cx if n != "squirrel" else cx - 13
+            o.append(f'<path d="M{bx - 20},{base - 40} L{bx + 20},{base - 2} M{bx + 20},{base - 40} L{bx - 20},{base - 2}" stroke="{mute("#E5484D")}" '
+                     f'stroke-width="8" filter="{paper_filter(1.1)}"/>')
+        o.append(paper(ell(cx if n != "squirrel" else cx - 13, base + 20, 12), "#8C6BE8" if i == 1 else "#D9CDB8", .8)
+                 + tx(cx if n != "squirrel" else cx - 13, base + 26, str(i + 1), 15, "#FFFFFF"))
+    mx, my = 192, 350
+    o.append(f'<circle cx="{mx}" cy="{my}" r="58" fill="#DDF3FF" opacity=".25"/>')
+    o.append(paper(tube([(mx + 44, my + 44, 7), (mx + 74, my + 74, 8.5)], 2), "#9B5E34", 1.1))
+    o.append(f'<path d="{ell(mx, my, 66) + ell(mx, my, 56)}" fill="{mute(GOLD)}" fill-rule="evenodd" filter="{paper_filter(1.2)}"/>')
+    # clues
+    clues = [("線索1：", "牠有長耳朵", "ears", "#FFE3EC"), ("線索2：", "牠沒有圍巾", "scarf", "#E3F3DC")]
+    for k, (lab, txt, icon, bgc) in enumerate(clues):
+        y = 490 + k * 84
+        o.append(b_card(20, y, 350, 72, (-.6, .5)[k]))
+        o.append(paper(ell(58, y + 36, 26), bgc, .9))
+        if icon == "ears":
+            o.append(ic(in_b(i_ears), 58, y + 36, 1.0))
+        else:
+            o.append(ic(in_b(i_scarf), 58, y + 36, 1.0)
+                     + f'<path d="{ell(58, y + 36, 23) + ell(58, y + 36, 19)}" fill="{mute("#E5484D")}" fill-rule="evenodd" filter="{paper_filter(.8)}"/>'
+                     + f'<path d="M{58 - 15},{y + 51} L{58 + 15},{y + 21}" stroke="{mute("#E5484D")}" stroke-width="4" filter="{paper_filter(.8)}"/>')
+        o.append(f'<text x="96" y="{y + 44}" font-size="21" fill="{INK}" font-family="Huninn, sans-serif"><tspan fill="#8C6BE8">{lab}</tspan>{txt}</text>')
+        o.append(b_check(338, y + 36, 15))
+    o.append(fox_style("B", 66, 748, 112, 124, pose="glass", look=(3, -1)))
+    o.append(b_bubble(138, 700, 234, 84, "left", 742))
+    o.append(tx(255, 734, "找到了！", 21, "#3E9A4A"))
+    o.append(tx(255, 764, "是沒有圍巾的兔子。", 19, INK))
+    o.append(b_dots(195, 824, 3, 1, "#8C6BE8"))
+    return page("".join(o), B_BG)
+
+
+# ---------------------------------------------------------------- 15 阿布 changes style in each land
+H15 = 640
+
+
+def sheet_change():
+    o = [f'<rect width="{W}" height="{H15}" fill="{lg([(0, "#E9F4FF"), (1, "#F6EFFF")])}"/>']
+    o.append(tx(195, 54, "阿布變身！", 32, FOX, extra='stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" paint-order="stroke"'))
+    o.append(tx(195, 54, "阿布變身！", 32, FOX, extra=f'stroke="{lin(FOX)}" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke"'))
+    # three grounds
+    o.append(f'<path d="{rr(8, 384, 124, 48, 14)}" fill="#BFEAA4" stroke="{lin("#BFEAA4")}" stroke-width="2"/>')
+    o.append(paper(rr(136, 386, 118, 46, 10), "#B8D59A", 1.3))
+    o.append(f'<rect x="258" y="384" width="124" height="48" rx="6" fill="#DADDF8"/>'
+             + "".join(f'<rect x="{x}" y="{y}" width="14" height="14" rx="2" fill="#C5C9F2"/>' for x in range(264, 376, 28) for y in (388, 416)))
+    o.append(tx(195, 92, "三個地方，三種樣子", 16, SOFT))
+    o.append(arch_a(66, 404, 102, 262, "卡通城", 2))
+    o.append(arch_b(195, 404, 102, 262, "紙片森林", 1))
+    o.append(arch_c(324, 404, 102, 262, "積木王國", 1))
+    o.append(fox_style("A", 66, 318, 106, 156))
+    o.append(fox_style("B", 195, 318, 106, 156))
+    o.append(fox_style("C", 324, 320, 98, 150))
+    # footprints from gate to gate
+    for x in range(30, 372, 26):
+        if not (118 < x < 152 or 244 < x < 276):
+            o.append(f'<ellipse cx="{x + 5}" cy="{464 + (4 if (x // 26) % 2 else -4)}" rx="5" ry="3.6" fill="#C9B5E6"/>')
+    o.append(arrow_head((262, 464), (240, 464), FOX, 10, 4) + arrow_head((140, 464), (118, 464), FOX, 10, 4))
+    o.append(bubble(20, 492, 350, 118, 28, "up", 70))
+    o.append(tx(195, 538, "走進卡通城／紙片森林／積木王國，", 19, INK))
+    o.append(tx(195, 576, "阿布會變成那裡的樣子！", 21, FOX))
+    return page("".join(o), "#EEF3FF", W, H15)
+
+
 SCREENS = {"1_首頁": screen_hub, "2_放哪裡": screen_room, "3_是誰的": screen_whose, "4_連連看": screen_link,
            "5_哪個不一樣": screen_odd, "6_接下來是什麼": screen_next, "7_小偵探": screen_detective,
            "8_答對了": screen_right, "9_家長模式": screen_parents}
+
+def contact_sheet2(items):
+    """items: (name, page height). Two rows of three, each scaled to the same width, top-aligned."""
+    cw_, gap, m, per = 232, 22, 30, 3
+    s = cw_ / W
+    rowh = round(H * s + 64)
+    w = per * cw_ + (per - 1) * gap + 2 * m
+    h = 2 * rowh + 40
+    out = []
+    for i, (n, ph) in enumerate(items):
+        r, c = divmod(i, per)
+        x, y = m + c * (cw_ + gap), 28 + r * rowh
+        out.append(f'<div style="position:absolute;left:{x}px;top:{y}px;width:{cw_}px;text-align:center">'
+                   f'<img src="file://{HERE / (n + ".png")}" style="width:{cw_}px;height:{ph * s:.0f}px;border-radius:18px;box-shadow:0 6px 16px rgba(70,50,110,.18)">'
+                   f'<div style="font:18px Huninn, sans-serif;color:{INK};margin-top:10px">{n.replace("_", " ")}</div></div>')
+    css = f"@font-face {{ font-family: Huninn; src: url('file://{FONT}'); }} * {{ margin:0; padding:0 }} body {{ width:{w}px; height:{h}px; background:#F4F0FA; position:relative }}"
+    return f'<!doctype html><html><head><meta charset="utf-8"><style>{css}</style></head><body>{"".join(out)}</body></html>', w, h
+
+
+SCREENS2 = {"10_樂園地圖": (screen_map, H), "11_紙片森林_連連看": (screen_b_link, H), "12_紙片森林_小偵探": (screen_b_detective, H),
+            "13_積木王國_接下來是什麼": (screen_c_next, H), "14_積木王國_哪個不一樣": (screen_c_odd, H),
+            "15_阿布變身": (sheet_change, H15)}
 
 SCRATCH = pathlib.Path(tempfile.gettempdir())
 
@@ -2063,7 +2851,7 @@ def main(only=None):
         render(html, HERE / "0_畫風選擇.png", W, ph, 2)
         print("0_畫風選擇")
     for name, make in SCREENS.items():
-        if only not in (None, name[0]):
+        if only not in (None, name.split("_")[0]):
             continue
         D = Defs()
         render(make(), HERE / f"{name}.png", W, H, 2)
@@ -2072,6 +2860,16 @@ def main(only=None):
         html, w, h = contact_sheet(list(SCREENS))
         render(html, HERE / "contact_sheet.png", w, h, 1.25)
         print("contact_sheet")
+    for name, (make, ph) in SCREENS2.items():
+        if only not in (None, name.split("_")[0]):
+            continue
+        D = Defs()
+        render(make(), HERE / f"{name}.png", W, ph, 2)
+        print(name)
+    if only in (None, "c2"):
+        html, w, h = contact_sheet2([(n, ph) for n, (_, ph) in SCREENS2.items()])
+        render(html, HERE / "contact_sheet2.png", w, h, 1.5)
+        print("contact_sheet2")
 
 
 if __name__ == "__main__":
