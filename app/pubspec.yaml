@@ -58,7 +58,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/art/
+    - assets/art/park/
+    - assets/art/city/
+    - assets/art/forest/
+    - assets/art/blocks/
     - assets/sounds/
   fonts:
     - family: Huninn
