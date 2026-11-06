@@ -28,6 +28,22 @@ abstract final class Spots {
   static const abu = Offset(0.526, 0.938);
 }
 
+/// Where the 390×844 map sits in [box]: it keeps its shape, and on wide
+/// screens the sky fills the sides.
+Rect mapRect(Size box) {
+  final scale = math.min(box.width / 390, box.height / 844);
+  final w = 390 * scale, h = 844 * scale;
+  return Rect.fromLTWH((box.width - w) / 2, (box.height - h) / 2, w, h);
+}
+
+/// [child] centred on the map spot [f], [width] wide.
+Widget placeOnMap(Rect map, Offset f, double width, {required Widget child}) => Positioned(
+      left: map.left + f.dx * map.width - width / 2,
+      top: map.top + f.dy * map.height,
+      width: width,
+      child: FractionalTranslation(translation: const Offset(0, -0.5), child: Center(child: child)),
+    );
+
 /// The home screen: the park map with three lands and their six games.
 /// Tapping a game sign sends 阿布 in, changing into that land's style.
 class ParkScreen extends ConsumerStatefulWidget {
@@ -98,15 +114,13 @@ class _ParkScreenState extends ConsumerState<ParkScreen> with SingleTickerProvid
     return Scaffold(
       backgroundColor: const Color(0xFFCDEBFF),
       body: LayoutBuilder(builder: (context, box) {
-        // The map keeps its shape; on wide screens the sky fills the sides.
-        final scale = math.min(box.maxWidth / 390, box.maxHeight / 844);
-        final mw = 390 * scale, mh = 844 * scale;
-        final ox = (box.maxWidth - mw) / 2, oy = (box.maxHeight - mh) / 2;
+        final map = mapRect(box.biggest);
+        final mw = map.width, mh = map.height, ox = map.left, oy = map.top;
         Offset at(Offset f) => Offset(ox + f.dx * mw, oy + f.dy * mh);
         final pad = MediaQuery.paddingOf(context);
         return Stack(children: [
           Positioned(left: ox, top: oy, width: mw, height: mh, child: const ParkArt('map', fit: BoxFit.fill)),
-          _place(at(Spots.title), mw * 0.57, child: _Title(width: mw * 0.57)),
+          _place(at(Spots.title), mw * 0.57, child: ParkTitle(width: mw * 0.57)),
           for (final MapEntry(key: land, value: spot) in Spots.lands.entries)
             _place(at(spot), mw * 0.26, child: _LandTag(land: land, stars: [for (final k in GameKind.values) if (k.land == land) g.starsOf(k)].fold(0, (a, b) => a + b))),
           for (final MapEntry(key: game, value: spot) in Spots.games.entries)
@@ -192,11 +206,12 @@ class _ParkScreenState extends ConsumerState<ParkScreen> with SingleTickerProvid
       );
 }
 
-/// The park's name on the plank under the rainbow.
-class _Title extends StatelessWidget {
-  const _Title({required this.width});
+/// The park's name on the plank under the rainbow ([dim] at night).
+class ParkTitle extends StatelessWidget {
+  const ParkTitle({super.key, required this.width, this.dim = false});
 
   final double width;
+  final bool dim;
 
   @override
   Widget build(BuildContext context) => Stack(children: [
@@ -208,10 +223,10 @@ class _Title extends StatelessWidget {
             foreground: Paint()
               ..style = PaintingStyle.stroke
               ..strokeWidth = width * 0.025
-              ..color = Colors.white,
+              ..color = dim ? const Color(0xFF9AA0C8) : Colors.white,
           ),
         ),
-        Text(Strings.appName, style: TextStyle(fontSize: width * 0.15, fontWeight: FontWeight.w700, color: const Color(0xFFE8503A))),
+        Text(Strings.appName, style: TextStyle(fontSize: width * 0.15, fontWeight: FontWeight.w700, color: dim ? const Color(0xFF5B5F8F) : const Color(0xFFE8503A))),
       ]);
 }
 

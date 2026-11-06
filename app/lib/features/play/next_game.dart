@@ -116,17 +116,17 @@ class _Train extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final cars = round.shown.length + 1;
-        final unit = math.min(box.maxWidth / (cars + 1.6), box.maxHeight * 0.5);
+        final unit = math.min(box.maxWidth / (cars * 1.08 + 1.3), box.maxHeight * 0.55);
         return Center(
           child: SizedBox(
             height: unit * 1.6,
             child: FittedBox(
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                for (final t in round.shown) _Wagon(unit: unit, child: TokenView(t, size: unit * 0.8)),
+                for (final t in round.shown) _Wagon(unit: unit, child: TokenView(t, size: unit * 0.92)),
                 _Wagon(
                   unit: unit,
                   dashed: !filled,
-                  child: filled ? TokenView(round.answer, size: unit * 0.8) : Text('?', style: TextStyle(fontSize: unit * 0.55, fontWeight: FontWeight.w700, color: const Color(0xFF7A6FB0))),
+                  child: filled ? TokenView(round.answer, size: unit * 0.92) : Text('?', style: TextStyle(fontSize: unit * 0.55, fontWeight: FontWeight.w700, color: const Color(0xFF7A6FB0))),
                 ),
                 _Engine(unit: unit),
               ].reversed.toList()),
@@ -181,14 +181,14 @@ class _Engine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: unit * 1.6,
+        width: unit * 1.3,
         height: unit * 1.45,
         child: Stack(children: [
-          Positioned(left: unit * 0.1, top: unit * 0.1, width: unit * 0.26, height: unit * 0.5, child: const ColoredBox(color: Color(0xFF3B2F55))),
-          Positioned(left: 0, top: unit * 0.55, width: unit * 1.1, height: unit * 0.67, child: DecoratedBox(decoration: BoxDecoration(color: const Color(0xFFFF5A4E), borderRadius: BorderRadius.circular(unit * 0.08)))),
-          Positioned(left: unit * 0.78, top: unit * 0.2, width: unit * 0.8, height: unit * 1.02, child: DecoratedBox(decoration: BoxDecoration(color: const Color(0xFF3D7BFF), borderRadius: BorderRadius.circular(unit * 0.08)))),
-          Positioned(left: unit * 0.96, top: unit * 0.34, width: unit * 0.44, height: unit * 0.34, child: DecoratedBox(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(unit * 0.06)))),
-          for (final x in [0.25, 0.75, 1.2])
+          Positioned(left: unit * 0.08, top: unit * 0.12, width: unit * 0.22, height: unit * 0.46, child: const ColoredBox(color: Color(0xFF3B2F55))),
+          Positioned(left: 0, top: unit * 0.55, width: unit * 0.9, height: unit * 0.67, child: DecoratedBox(decoration: BoxDecoration(color: const Color(0xFFFF5A4E), borderRadius: BorderRadius.circular(unit * 0.08)))),
+          Positioned(left: unit * 0.62, top: unit * 0.2, width: unit * 0.66, height: unit * 1.02, child: DecoratedBox(decoration: BoxDecoration(color: const Color(0xFF3D7BFF), borderRadius: BorderRadius.circular(unit * 0.08)))),
+          Positioned(left: unit * 0.76, top: unit * 0.34, width: unit * 0.38, height: unit * 0.32, child: DecoratedBox(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(unit * 0.06)))),
+          for (final x in [0.22, 0.62, 1.02])
             Positioned(
               left: unit * x - unit * 0.15,
               top: unit * 1.06,

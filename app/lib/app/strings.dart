@@ -47,7 +47,7 @@ abstract final class Strings {
 
   // Resting.
   static const restTitle = '樂園要休息了';
-  static const restLine = '樂園要休息了，眼睛也休息一下。\n我們去把家裡的玩具放回家吧！';
+  static const restLine = '眼睛也休息一下。\n我們去把家裡的玩具\n放回家吧！';
 
   // Parent gate (as in the sibling apps).
   static const callParent = '請爸爸媽媽來幫忙喔！';

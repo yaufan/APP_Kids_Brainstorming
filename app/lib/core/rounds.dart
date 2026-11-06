@@ -259,8 +259,9 @@ class PatternRound extends NextRound {
       final abc = [for (var i = 0; i < 3; i++) Token(shapes[i], hues[i])];
       unit = [for (final ch in kind.split('')) abc['ABC'.indexOf(ch)]];
     }
-    // Two full repeats and a bit more, at most seven wagons.
-    final length = math.min(7, unit.length * 2 + r.nextInt(unit.length));
+    // About two repeats, at most five wagons before the empty one (so the
+    // wagons stay big on a phone).
+    final length = math.min(5, unit.length * 2 + r.nextInt(unit.length));
     final train = [for (var i = 0; i <= length; i++) unit[i % unit.length]];
     final answer = train.last;
     final n = level.pick(2, 3, 4);

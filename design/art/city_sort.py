@@ -1,9 +1,11 @@
 """放哪裡？ (put things back where they belong) pictures for 卡通城, style A 「動畫片風」.
 
-    python3 city_sort.py                  # writes every picture to app/assets/art/city/
-    python3 city_sort.py preview OUT.png  # contact sheet: the things at 200 and 120 px, the places,
-                                          # and the six scenes with their places laid out (needs
-                                          # Node.js + Playwright)
+    python3 city_sort.py                         # writes every picture to app/assets/art/city/
+    python3 city_sort.py preview OUT.png         # contact sheet: the things at 200 and 120 px, the places at
+                                                 # 120 px, and the six scenes with their places laid out
+    python3 city_sort.py things OUT.png 200 [id...]   # a sheet of some pictures at one size
+    python3 city_sort.py scenes OUT.png [room ...]    # some scenes with their places and a few things
+    (the sheets need Node.js + Playwright; they use docs/mockups/render.js)
 
 What it draws (ids exactly as in app/lib/core/content.dart: sortScenes, sortThings):
   scene_<id>   six backgrounds, 390 x 600, painted edge to edge, calm and low in contrast: only the
@@ -13,7 +15,14 @@ What it draws (ids exactly as in app/lib/core/content.dart: sortScenes, sortThin
                (fractions of the scene). Each place is drawn where it should stand inside its square
                (standing ones touch the bottom edge and carry a soft ground shadow), and its outline
                is thick enough to be about 2.3 px on screen at that width (read from content.dart)
-  things       200 x 200, transparent, centred, the longer side 85 % of the box (FILL)
+  things       200 x 200, transparent, centred, the longer side 85 % of the box (FILL). Each @thing box
+               was measured from the rendered picture, so what is seen fills 83-87 % and sits in the
+               middle; after changing a drawing, measure again and update its box.
+
+Layout used for the places (and the composites in the preview): a place is a square, w x scene width
+on a side, centred at (x * width, y * height) of the 390 x 600 scene. The kitchen's 冰箱 stands on the
+floor and 冷凍庫 (大 only) sits right on top of it as the top unit of one fridge-freezer; the 一般垃圾
+bin stands at the back by the wall, the four recycling bins in front.
 
 Shared style-A helpers are in city_kit.py.
 """
@@ -26,10 +35,9 @@ import sys
 import tempfile
 
 import city_kit as K
-from city_kit import (BLUE, BROWN, CREAM, GOLD, GREEN, ORANGE, PINK, PURPLE, RED, SKY, TEAL, WHITE, WHITE_OL,
-                      WOOD, YELLOW, at, blob, blush, calm, celov, clipped, cloud_d, comp, dk, dot_eye, drop_d, ell,
-                      eye, fit, flat, g, ground, happy_eye, hi, hidot, hose, lg, lin, ln, lt, mix, n, open_mouth, part,
-                      poly, rg, rr, save, shd, smile, sparkle, spline, star_d, stroke, tone, tube)
+from city_kit import (BLUE, GOLD, GREEN, ORANGE, PINK, PURPLE, RED, TEAL, WHITE, WHITE_OL, YELLOW, at, blob, blush, calm,
+                      celov, clipped, cloud_d, comp, dk, dot_eye, drop_d, ell, eye, fit, flat, g, ground, hi, hidot, lg,
+                      lin, ln, lt, n, part, poly, rr, save, shd, smile, sparkle, star_d, tube)
 
 CONTENT = K.ROOT / "app" / "lib" / "core" / "content.dart"
 
@@ -47,7 +55,7 @@ def thing(box):
 
 
 # ---------------------------------------------------------------- 房間
-@thing((-46, -46, 46, 46))
+@thing((-44, -44, 44, 44))
 def ball():
     c = ell(0, 0, 42)
     P = (-12, -14)
@@ -83,7 +91,7 @@ def _block(x, y, s, col, emblem):
     return o + comp(rr(x, y, s, s, 4), col, inner, s=(-5, -6), hl=hi(f"M{n(x + 5)},{n(y + s * .3)} L{n(x + 5)},{n(y + 6)}", 3, .6))
 
 
-@thing((-70, -82, 72, 58))
+@thing((-70, -74, 76, 60))
 def blocks():
     o = _block(-68, 0, 58, RED, "star")
     o += _block(4, 0, 58, BLUE, "circle")
@@ -91,7 +99,7 @@ def blocks():
     return o
 
 
-@thing((-92, -66, 96, 44))
+@thing((-89, -63, 91, 40))
 def toy_car(col=RED):
     body = ("M-82,8 L-82,-12 C-82,-20 -76,-25 -68,-25 L-48,-26 L-32,-52 C-28,-58 -22,-60 -14,-60 L28,-60 "
             "C36,-60 42,-57 47,-51 L64,-28 L76,-26 C84,-24 88,-18 88,-10 L88,8 C88,14 84,18 78,18 L-76,18 C-80,18 -82,14 -82,8 Z")
@@ -108,7 +116,7 @@ def toy_car(col=RED):
     return o
 
 
-@thing((-78, -64, 74, 62))
+@thing((-75, -60, 74, 58))
 def book(col="#FF7A59"):
     o = part(rr(-60, -44, 128, 94, 8), "#FFF3D9", s=None, ol="#C9A77A")
     o += "".join(ln(f"M{x},-40 L{x},46", "#D9C19A", .62) for x in (62, 65))
@@ -121,7 +129,7 @@ def book(col="#FF7A59"):
     return g(o, "rotate(-6)")
 
 
-@thing((-46, -76, 80, 72))
+@thing((-39, -75, 81, 62))
 def sock(col="#FF8FB1"):
     leg = ("M-22,-56 L20,-56 L20,6 C20,14 26,19 34,21 L56,27 C70,31 76,46 70,57 C64,67 50,69 38,65 "
            "L-6,52 C-20,48 -26,36 -24,22 Z")
@@ -133,7 +141,7 @@ def sock(col="#FF8FB1"):
     return g(o, "rotate(-8)")
 
 
-@thing((-80, -60, 80, 66))
+@thing((-81, -59, 81, 66))
 def tshirt(col="#36C46E"):
     d = ("M-24,-56 C-14,-47 14,-47 24,-56 L58,-42 C64,-40 68,-36 70,-30 L78,-10 L52,0 L46,-12 L46,56 "
          "C46,60 42,63 38,63 L-38,63 C-42,63 -46,60 -46,56 L-46,-12 L-52,0 L-78,-10 L-70,-30 C-68,-36 -64,-40 -58,-42 Z")
@@ -144,18 +152,20 @@ def tshirt(col="#36C46E"):
     return o
 
 
-@thing((-76, -46, 76, 46))
-def pillow(col="#B9DCFF"):
+@thing((-75, -45, 75, 45))
+def pillow(col="#C4E2FF"):
     d = "M-72,-42 C-40,-31 40,-31 72,-42 C63,-14 63,14 72,42 C40,31 -40,31 -72,42 C-63,14 -63,-14 -72,-42Z"
     dots = "".join(part(star_d(6, 2.8, cx=x, cy=y, round_=.2), "#FFFFFF", s=None, ol=False)
                    for x, y in ((-38, -12), (-6, 8), (28, -14), (46, 16), (-30, 20), (10, -20)))
-    o = comp(d, col, dots, s=(-9, -10), hl=hi("M-54,-24 C-30,-19 -4,-19 16,-21", 5, .75))
-    o += ln("M-60,-33 C-34,-25 34,-25 60,-33 M-60,33 C-34,25 34,25 60,33", lin(col), .5, op=.5)
+    ol = "#5F8FD0"
+    o = comp(d, col, dots, s=(-9, -10), ol=ol, hl=hi("M-54,-24 C-30,-19 -4,-19 16,-21", 5, .75))
+    o += ln("M-72,-42 C-62,-34 -56,-30 -50,-28 M72,-42 C62,-34 56,-30 50,-28 M-72,42 C-62,34 -56,30 -50,28 "
+            "M72,42 C62,34 56,30 50,28", ol, .55, op=.6)
     return o
 
 
 # ---------------------------------------------------------------- 浴室
-@thing((-96, -60, 98, 48))
+@thing((-83, -82, 95, 59))
 def toothbrush(col="#2EC4C0"):
     o = []
     handle = ("M-92,6 C-92,-2 -88,-6 -80,-6 L20,-8 C30,-8 38,-6 46,-4 L92,-6 C96,-6 98,-2 98,2 L98,10 "
@@ -169,7 +179,7 @@ def toothbrush(col="#2EC4C0"):
     return g("".join(o), "rotate(-28)")
 
 
-@thing((-84, -54, 86, 52))
+@thing((-76, -36, 81, 43))
 def toothpaste():
     body = "M-70,-22 L-70,22 L-62,22 C-30,24 20,26 46,16 L46,-16 C20,-26 -30,-24 -62,-22 Z"
     inner = flat("M-30,-40 L18,-40 L18,40 L-30,40 Z", BLUE)
@@ -183,7 +193,7 @@ def toothpaste():
     return g(o, "rotate(-16)")
 
 
-@thing((-66, -80, 66, 80))
+@thing((-63, -81, 63, 78))
 def towel(col="#FFA94D"):
     back = "M-44,-66 C-44,-74 -38,-78 -30,-78 L44,-78 C52,-78 58,-72 58,-64 L60,58 L-42,58 Z"
     front = "M-58,-62 C-58,-70 -52,-74 -44,-74 L40,-74 C48,-74 54,-68 54,-60 L56,66 L-60,66 Z"
@@ -197,7 +207,7 @@ def towel(col="#FFA94D"):
     return o
 
 
-@thing((-86, -70, 78, 58))
+@thing((-87, -67, 77, 56))
 def rubber_duck(col="#FFD43B"):
     o = ""
     body = ("M-66,8 C-66,-14 -40,-20 -10,-14 C14,-10 34,-12 50,-24 C58,-30 66,-36 71,-31 C78,-10 74,18 58,34 "
@@ -213,7 +223,7 @@ def rubber_duck(col="#FFD43B"):
     return o
 
 
-@thing((-68, -88, 68, 40))
+@thing((-66, -84, 66, 38))
 def soap(col="#FF9EC4"):
     body = ("M-64,-12 C-64,-28 -50,-34 -36,-34 L36,-34 C50,-34 64,-28 64,-12 L64,14 C64,30 50,36 36,36 "
             "L-36,36 C-50,36 -64,30 -64,14Z")
@@ -227,7 +237,7 @@ def soap(col="#FF9EC4"):
 
 
 # ---------------------------------------------------------------- 廚房
-@thing((-40, -72, 40, 64))
+@thing((-32, -74, 32, 62))
 def milk():
     o = part("M-30,-36 L0,-62 L30,-36 Z", "#FFFFFF", s=None, ol="#5A86D6")
     o += part(rr(-6, -72, 12, 12, 2), "#FFFFFF", s=None, ol="#5A86D6")
@@ -252,14 +262,14 @@ def _bok_leaf(a):
     return g(o, f"rotate({a} 0 66)")
 
 
-@thing((-92, -100, 92, 76))
+@thing((-98, -99, 98, 78))
 def vegetables():
     o = "".join(_bok_leaf(a) for a in (-30, 30, -15, 15, 0))
     o += part(rr(-25, 34, 50, 11, 5), RED, s=(-2, -3))
     return o
 
 
-@thing((-80, -40, 80, 66))
+@thing((-79, -40, 79, 63))
 def bowl(col="#FFFFFF"):
     blue = "#4F7FD8"
     o = part(rr(-26, 46, 52, 14, 5), col, s=(-2, -3), ol="#6F7FB8")
@@ -273,7 +283,7 @@ def bowl(col="#FFFFFF"):
     return o
 
 
-@thing((-86, -44, 86, 44))
+@thing((-85, -37, 85, 43))
 def plate(col="#FFFFFF"):
     rim = "#6FC2F5"
     o = part(ell(0, 6, 82, 34), "#DDE3F4", s=None, ol="#6F7FB8")
@@ -285,7 +295,7 @@ def plate(col="#FFFFFF"):
     return o
 
 
-@thing((-62, -64, 80, 70))
+@thing((-57, -57, 68, 72))
 def dirty_cup(col="#7DC4F5"):
     brown = "#8A5A36"
     o = f'<ellipse cx="2" cy="58" rx="56" ry="10" fill="none" stroke="{brown}" stroke-width="{K.sw(1.4)}" opacity=".55"/>'
@@ -302,7 +312,7 @@ def dirty_cup(col="#7DC4F5"):
     return o
 
 
-@thing((-54, -122, 54, 98))
+@thing((-51, -122, 51, 99))
 def ice_cream():
     o = ""
     cone = "M-38,-4 L38,-4 L4,92 C2,97 -2,97 -4,92Z"
@@ -321,7 +331,7 @@ def ice_cream():
 
 
 # ---------------------------------------------------------------- 大自然
-@thing((-70, -84, 84, 50))
+@thing((-69, -85, 84, 51))
 def bird(col="#4FA8F5"):
     o = part("M10,-14 C2,-50 22,-72 44,-80 C50,-58 42,-30 26,-10Z", shd(col), s=None)
     o += part("M38,4 L80,-12 C84,-4 80,6 74,8 C82,14 82,26 74,28 L36,22Z", col, s=(-3, -4))
@@ -365,12 +375,12 @@ def _critter_squirrel():
     return "".join(o)
 
 
-@thing((-70, -100, 108, 104))
+@thing((-59, -95, 107, 106))
 def squirrel():
     return _critter_squirrel()
 
 
-@thing((-78, -96, 92, 104))
+@thing((-68, -98, 100, 106))
 def monkey():
     fur, face, li = "#A88A6C", "#F6B8A6", "#E9D3B8"
     o = []
@@ -418,7 +428,7 @@ def _cow_head():
     return "".join(o)
 
 
-@thing((-124, -76, 96, 84))
+@thing((-128, -76, 97, 78))
 def cow():
     wh, ol, spot, hoof = "#FFFFFF", "#7A7088", "#4A4250", "#6A5A60"
     o = []
@@ -452,15 +462,15 @@ def _scallop(cx, cy, rx, ry, k, bump):
     return d + "Z"
 
 
-@thing((-104, -76, 92, 68))
+@thing((-112, -69, 96, 75))
 def sheep():
     wool, face, leg = "#FFFDF6", "#6A5A78", "#5E5468"
     o = []
-    for x in (50, -18):
-        o.append(part(tube([(x, 24, 6.5), (x, 54, 6.5)]), dk(leg, .2), s=None, ol="#3A3046"))
+    for x in (52, -16):
+        o.append(part(tube([(x, 20, 7), (x, 58, 7)]), dk(leg, .2), s=None, ol="#3A3046"))
+    for x in (34, -34):
+        o.append(part(tube([(x, 24, 7.5), (x, 64, 7.5)]), leg, s=None, ol="#3A3046"))
     o.append(part(_scallop(8, 0, 72, 42, 14, 12), wool, s=(-8, -9), ol=WHITE_OL, hl=hi("M-36,-30 C-16,-40 10,-42 30,-38", 5, .9)))
-    for x in (36, -32):
-        o.append(part(tube([(x, 28, 6.5), (x, 58, 6.5)]), leg, s=None, ol="#3A3046"))
     o.append(part(_scallop(78, -6, 14, 14, 6, 5), wool, s=None, ol=WHITE_OL, k=.8))
     # head (front-facing), ears out to the sides
     for sx in (-1, 1):
@@ -473,7 +483,7 @@ def sheep():
     return "".join(o)
 
 
-@thing((-104, -76, 102, 72))
+@thing((-106, -77, 105, 51))
 def fish(col="#FF8A26"):
     o = []
     fin_c = "#FFC23D"
@@ -499,7 +509,7 @@ def _tentacle(pts, col):
     return o
 
 
-@thing((-96, -90, 96, 92))
+@thing((-100, -89, 100, 94))
 def octopus(col="#FF7E86"):
     o = []
     back = shd(col)
@@ -529,7 +539,7 @@ APPLE_D = ("M0,-50 C20,-68 62,-66 76,-30 C88,6 68,58 36,70 C22,76 10,72 0,67 C-1
            "C-68,58 -88,6 -76,-30 C-62,-66 -20,-68 0,-50 Z")
 
 
-@thing((-82, -98, 82, 76))
+@thing((-83, -93, 83, 76))
 def apple(col=RED):
     o = part("M-3,-46 C-5,-62 -1,-76 7,-88 L15,-84 C8,-72 5,-60 5,-46 Z", "#8A5A35", s=(-1.5, -2))
     o += part(APPLE_D, col, s=(-12, -12), hl=hi("M-56,-26 C-52,-40 -40,-48 -28,-48", 9, .8) + hidot(-60, -8, 4.5))
@@ -547,7 +557,7 @@ def _one_banana(col=YELLOW):
     return o
 
 
-@thing((-90, -78, 98, 64))
+@thing((-83, -71, 102, 64))
 def banana():
     o = part("M-74,-38 L-80,-62 C-81,-68 -70,-70 -68,-64 L-60,-40 Z", "#8A6A35", s=(-1.5, -2))
     o += g(_one_banana(), "rotate(-16 -66 -42)")
@@ -556,7 +566,7 @@ def banana():
     return o
 
 
-@thing((-90, -50, 90, 46))
+@thing((-87, -47, 89, 45))
 def bread(col="#E39A4C"):
     loaf = ("M-84,20 C-86,-14 -60,-42 -10,-44 C40,-46 82,-26 86,8 C88,30 70,40 40,42 L-50,42 C-72,40 -84,34 -84,20Z")
     bottom = flat("M-100,22 C-60,30 40,32 100,20 L100,60 L-100,60Z", lt(col, .32))
@@ -567,7 +577,7 @@ def bread(col="#E39A4C"):
     return o
 
 
-@thing((-48, -86, 48, 82))
+@thing((-28, -81, 43, 65))
 def carrot():
     o = ""
     for a in (-24, 0, 24):
@@ -578,7 +588,7 @@ def carrot():
     return g(o, "rotate(18)")
 
 
-@thing((-90, -68, 90, 72))
+@thing((-89, -69, 89, 75))
 def cabbage():
     light, mid, dark = "#CDEFA0", "#9ADB6E", "#6EBF4A"
     o = part(ell(0, 2, 64, 58), light, s=(-8, -9), ol="#5FA03C", hl=hi("M-40,-30 C-30,-44 -14,-50 2,-51", 6, .7))
@@ -595,7 +605,7 @@ def cabbage():
     return o
 
 
-@thing((-72, -84, 72, 78))
+@thing((-69, -81, 69, 77))
 def frozen_dumplings(col="#5AA9F0"):
     o = ""
     bag = rr(-62, -64, 124, 138, 12)
@@ -619,7 +629,7 @@ def frozen_dumplings(col="#5AA9F0"):
 
 
 # ---------------------------------------------------------------- 資源回收
-@thing((-82, -86, 82, 86))
+@thing((-77, -87, 77, 87))
 def newspaper():
     paper, ol, ink = "#F3F1F7", WHITE_OL, "#8E86A8"
     o = part(rr(-58, -72, 124, 150, 4), "#E2DEEC", s=None, ol=ol)
@@ -636,7 +646,7 @@ def newspaper():
     return g(o, "rotate(-7)")
 
 
-@thing((-96, -70, 92, 78))
+@thing((-97, -65, 93, 73))
 def cardboard(col="#D9A066"):
     o = ""
     o += part(poly([(-36, -32), (64, -32), (72, -62), (-28, -62)]), shd(col), s=None)
@@ -652,7 +662,7 @@ def cardboard(col="#D9A066"):
     return o
 
 
-@thing((-38, -96, 38, 76))
+@thing((-36, -97, 36, 76))
 def pet_bottle():
     ol = "#5A9BD5"
     o = part(rr(-14, -94, 28, 18, 4), BLUE, s=(-2, -3))
@@ -666,7 +676,7 @@ def pet_bottle():
     return o
 
 
-@thing((-44, -78, 44, 72))
+@thing((-43, -77, 43, 72))
 def soda_can(col=RED):
     silver, sd = "#D5DAE4", "#AEB6C8"
     body = rr(-40, -54, 80, 112, 6)
@@ -680,7 +690,7 @@ def soda_can(col=RED):
     return o
 
 
-@thing((-92, -74, 92, 70))
+@thing((-87, -75, 87, 67))
 def banana_peel(col=YELLOW):
     inner, tip, spot = "#FFF3C2", "#7A5A2E", "#9A6A2E"
     o = ""
@@ -703,17 +713,23 @@ def banana_peel(col=YELLOW):
     return o
 
 
-@thing((-66, -78, 66, 58))
+@thing((-70, -58, 69, 59))
 def tissue():
-    paper, sh_, ol, crease = "#FBFAFF", "#DCD5EE", WHITE_OL, "#B4AACF"
-    o = part("M-8,-46 L4,-74 L24,-62 L20,-40Z", paper, s=None, ol=ol) + flat("M8,-66 L24,-62 L20,-40 L10,-48Z", sh_)
-    body = blob([(-58, 10), (-52, -28), (-22, -50), (14, -46), (46, -34), (62, -4), (54, 30), (24, 52), (-14, 54), (-46, 40)])
-    facets = (flat(poly([(-12, -4), (8, 6), (40, 46), (70, 40), (70, 70), (-10, 70)]), sh_, .9)
-              + flat(poly([(20, -50), (30, -8), (70, -16), (70, -50)]), sh_, .7)
-              + flat(poly([(-70, 20), (-36, 14), (-30, 60), (-70, 60)]), sh_, .6)
-              + flat(poly([(-40, -40), (-14, -10), (-36, 2)]), "#FFFFFF"))
-    o += comp(body, paper, facets, s=None, ol=ol)
-    o += ln("M-38,-16 L-14,-4 L-6,-28 M10,-34 L24,-8 L46,-14 M-34,22 L-8,10 L8,34 M22,6 L34,30 M-14,-4 L8,6", crease, .7)
+    """A used tissue: a soft crumpled ball with short folds (bumpy edge, curved fold marks)."""
+    paper, sh_, ol, crease = "#FBFAFF", "#DCD5EE", WHITE_OL, "#ADA3CB"
+    rng = random.Random(23)
+    k = 18
+    pts = []
+    for i in range(k):
+        a = 2 * math.pi * i / k
+        r = 58 + (5 if i % 2 else -3) + rng.uniform(-3, 3)
+        pts.append((r * math.cos(a) * 1.08, r * math.sin(a) * .92))
+    body = blob(pts, 4)
+    folds = (flat("M-20,-34 Q-8,-20 6,-30 Q2,-46 -12,-50Z", "#FFFFFF") + flat("M10,8 Q26,0 40,10 Q30,26 14,24Z", sh_, .8)
+             + flat("M-46,4 Q-32,-4 -22,8 Q-30,22 -44,18Z", sh_, .7) + flat("M20,-28 Q34,-30 44,-20 Q36,-10 24,-14Z", "#FFFFFF"))
+    o = comp(body, paper, folds, s=(-10, -10), sh=sh_, ol=ol, hl=hi("M-44,-22 C-38,-34 -28,-42 -16,-46", 5, .9))
+    o += ln("M-20,-34 Q-8,-20 6,-30 M10,8 Q26,0 40,10 M-46,4 Q-32,-4 -22,8 M20,-28 Q34,-30 44,-20 "
+            "M-8,-4 Q2,-12 8,0 M-18,30 Q-6,22 4,34 M30,30 Q38,22 50,26", crease, .8)
     return o
 
 
@@ -1329,9 +1345,11 @@ def _icon_food(c):
 
 
 def _icon_trash(c):
-    ball_ = blob([(82, 140), (86, 122), (100, 114), (114, 120), (120, 136), (114, 152), (98, 158), (86, 152)])
-    o = part(ball_, "#FFFFFF", s=None, ol=c)
-    o += ln("M88,130 L98,136 L102,124 M104,140 L114,134 M92,148 L102,142 L106,152", c, .7)
+    """A crumpled tissue (like the tissue thing): bumpy round edge, curved folds."""
+    pts = [(100 + (22 + (2.5 if i % 2 else -1.5)) * math.cos(2 * math.pi * i / 14),
+            136 + (20 + (2.5 if i % 2 else -1.5)) * math.sin(2 * math.pi * i / 14)) for i in range(14)]
+    o = part(blob(pts, 4), "#FFFFFF", s=None, ol=c)
+    o += ln("M88,128 Q94,134 100,126 M102,142 Q108,136 114,142 M86,146 Q92,140 98,148 M104,122 Q110,124 114,130", c, .7)
     return o
 
 

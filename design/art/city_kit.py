@@ -618,7 +618,7 @@ FORBIDDEN = ("<filter", "<mask", "<style", "style=", "class=", "<text", "<image"
 
 def check(name, svg):
     """The flutter_svg rules: no filters, masks, CSS, text, images or patterns; under 800 <use>;
-    about 60 KB at most; whole, parseable XML."""
+    about 60 KB at most; whole, parseable XML; every path's data readable (check_path)."""
     bad = [f for f in FORBIDDEN if f in svg]
     if bad:
         raise SystemExit(f"{name}: uses {bad} (flutter_svg cannot draw these)")

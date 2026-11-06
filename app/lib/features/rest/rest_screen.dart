@@ -9,6 +9,7 @@ import '../../core/content.dart';
 import '../../core/providers.dart';
 import '../../core/sounds.dart';
 import '../parent/parent_gate.dart';
+import '../park/park_screen.dart';
 
 /// The play time is up: the park goes to sleep, and 阿布 sends the child to
 /// put the toys at home away (docs/design.md "每次玩多久"). Only a parent
@@ -31,7 +32,7 @@ class _RestScreenState extends ConsumerState<RestScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _sounds.play('rest');
-      if (ref.read(gameProvider).settings.voice) ref.read(voiceProvider).say(Strings.restLine.replaceAll('\n', ''));
+      if (ref.read(gameProvider).settings.voice) ref.read(voiceProvider).say('${Strings.restTitle}，${Strings.restLine.replaceAll('\n', '')}');
     });
   }
 
@@ -52,7 +53,15 @@ class _RestScreenState extends ConsumerState<RestScreen> {
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: const Color(0xFF1E2550),
         body: Stack(children: [
-          const Positioned.fill(child: ParkArt('map_night', fit: BoxFit.cover)),
+          Positioned.fill(
+            child: LayoutBuilder(builder: (context, box) {
+              final map = mapRect(box.biggest);
+              return Stack(children: [
+                Positioned.fromRect(rect: map, child: const ParkArt('map_night', fit: BoxFit.fill)),
+                placeOnMap(map, Spots.title, map.width * 0.57, child: ParkTitle(width: map.width * 0.57, dim: true)),
+              ]);
+            }),
+          ),
           Positioned.fill(child: ColoredBox(color: const Color(0xFF141A3C).withValues(alpha: 0.35))),
           SafeArea(
             child: Column(children: [
@@ -65,7 +74,7 @@ class _RestScreenState extends ConsumerState<RestScreen> {
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     const Text(Strings.restTitle, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Park.ink)),
                     const SizedBox(height: 8),
-                    Text(Strings.restLine, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, height: 1.5, color: Park.ink)),
+                    const Text(Strings.restLine, textAlign: TextAlign.center, style: TextStyle(fontSize: 21, height: 1.5, color: Park.ink)),
                   ]),
                 ),
               ),

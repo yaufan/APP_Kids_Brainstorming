@@ -158,7 +158,7 @@ void main() {
             expect(round.choices, contains(round.answer));
             expect(round.choices.length, level.pick(2, 3, 4));
             expect(round.choices.toSet().length, round.choices.length);
-            expect(round.shown.length, inInclusiveRange(4, 7));
+            expect(round.shown.length, inInclusiveRange(4, 5));
             final unit = round.kind == 'bigger' ? 3 : round.kind.length;
             final train = [...round.shown, round.answer];
             for (var k = unit; k < train.length; k++) {

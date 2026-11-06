@@ -65,10 +65,9 @@ class _DetectiveGameState extends State<DetectiveGame> {
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final w = box.maxWidth, h = box.maxHeight;
         final n = _r.suspects.length;
-        final size = math.min((w - 24) / n - 8, h * 0.42);
+        final size = math.min((w - 24) / n - 8, h * 0.38);
         final left = _r.left(_used);
-        return Column(children: [
-          SizedBox(height: h * 0.02),
+        return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           SizedBox(
             height: size * 1.25,
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -88,7 +87,7 @@ class _DetectiveGameState extends State<DetectiveGame> {
                 ),
             ]),
           ),
-          const Spacer(),
+          SizedBox(height: math.min(40, h * 0.06)),
           for (final (i, c) in _r.clues.indexed)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -120,7 +119,6 @@ class _DetectiveGameState extends State<DetectiveGame> {
                 ),
               ),
             ),
-          SizedBox(height: h * 0.02),
         ]);
       });
 }

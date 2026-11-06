@@ -97,6 +97,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   @override
   void dispose() {
     _next?.cancel();
+    _wait?.cancel();
+    _cap?.cancel();
     _sounds.release(this);
     super.dispose();
   }
@@ -143,9 +145,11 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         _ => Strings.ask[_game]!,
       };
 
-  void _say(String zh, {String? en}) {
+  /// Says [zh] (and [en] if the parent turned English on); completes when
+  /// it has been said.
+  Future<void> _say(String zh, {String? en}) async {
     final s = ref.read(gameProvider).settings;
-    if (mounted && s.voice) ref.read(voiceProvider).say(zh, en: s.english ? en : null);
+    if (mounted && s.voice) await ref.read(voiceProvider).say(zh, en: s.english ? en : null);
   }
 
   void _ask() {
@@ -175,11 +179,37 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       _line = '$praise$why';
       _cheer = true;
     });
-    _say('$praise$why');
     ref.read(gameProvider.notifier).change((g) => g.round(_game, wrong: _wrong));
-    _next?.cancel();
-    _next = Timer(Duration(milliseconds: 1600 + why.length * 120), _advance);
+    // The next round comes once 阿布 has finished explaining (and at least a
+    // moment to look), but never waits longer than [_longest].
+    final round = _roundNo;
+    var said = false, waited = false, gone = false;
+    void go() {
+      if (gone || !mounted || round != _roundNo || _solved) return;
+      gone = true;
+      _cap?.cancel();
+      _next?.cancel();
+      _next = Timer(const Duration(milliseconds: 700), _advance);
+    }
+
+    _say('$praise$why').then((_) {
+      said = true;
+      if (waited) go();
+    });
+    _wait?.cancel();
+    _wait = Timer(_least, () {
+      waited = true;
+      if (said) go();
+    });
+    _cap?.cancel();
+    _cap = Timer(_longest, go);
   }
+
+  Timer? _wait;
+  Timer? _cap;
+
+  static const _least = Duration(milliseconds: 1800);
+  static const _longest = Duration(seconds: 12);
 
   void _advance() {
     if (!mounted) return;

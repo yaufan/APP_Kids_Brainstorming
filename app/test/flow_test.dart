@@ -40,7 +40,9 @@ void main() {
     expect(find.text(Strings.solved), findsOneWidget);
     expect(app.sounds.played, contains('solved'));
     await shoot(app.tester, device, shot);
-    await app.tapLabel(Strings.toPark, ms: 800);
+    // The solved card's button (the home button under it says the same).
+    await app.tester.tap(find.bySemanticsLabel(Strings.toPark).last);
+    await app.settle(800);
     expect(app.location, '/');
   }
 

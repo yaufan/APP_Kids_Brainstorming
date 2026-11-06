@@ -1,6 +1,7 @@
 """The pictures of 「是誰的？」 in 卡通城 (style A 動畫片風), drawn with the shared kit city_kit.py.
 
     python3 city_people.py                    # writes every picture to app/assets/art/city/
+                                              # (but fish and carrot: see SHARED)
     python3 city_people.py dog hose           # only these
     python3 city_people.py preview out.png    # contact sheet + a check of 4 people on the street
 
@@ -20,7 +21,6 @@ flat fills, one hard cel shadow, a small highlight, thin outlines in a darker sh
 import base64
 import math
 import pathlib
-import re
 import subprocess
 import sys
 import tempfile
@@ -30,8 +30,8 @@ sys.path.insert(0, str(HERE))
 
 import city_kit as K  # noqa: E402
 from city_kit import (GOLD, GREEN, RED, WHITE_OL, at, begin, blob, blush, clipped, cloud_d, comp, dk, ell, eye,  # noqa: E402
-                      fit, flat, g, ground, happy_eye, heart_d, hi, hidot, hose, lg, lin, ln, lt, mix, n, open_mouth,
-                      part, poly, rg, rr, save, shd, sparkle, spline, star_d, stroke, tube, calm, OUT, OL_THING, OL_SCENE)
+                      fit, flat, g, ground, heart_d, hi, hidot, hose, lg, lin, ln, lt, mix, n, open_mouth, part, poly,
+                      rr, save, shd, star_d, stroke, tube, OUT, OL_THING, OL_SCENE)
 
 ROOT = HERE.parents[1]
 
@@ -113,14 +113,12 @@ def head(skin, sko, ears=True):
     return o
 
 
-def face(mouth="smile", lx=.5, ly=1.2, brows=None, wrinkles=False, cheek=True, ey=-60):
+def face(mouth="smile", lx=.5, ly=1.2, brows=None, cheek=True, ey=-60):
     o = eye(-15, ey, 8, 10, lx, ly, pc=PUPIL, ol=EYE_OL) + eye(15, ey, 8, 10, lx, ly, pc=PUPIL, ol=EYE_OL)
     if cheek:
         o += blush(-26, -46, 6.5, 4, op=.55) + blush(26, -46, 6.5, 4, op=.55)
     if brows:
         o += ln("M-22,-76 Q-15,-80 -8,-77", brows, .9) + ln("M8,-77 Q15,-80 22,-76", brows, .9)
-    if wrinkles:
-        o += ln("M-27,-63 L-31,-65 M-27,-59 L-31,-58", "#B98A6E", .5) + ln("M27,-63 L31,-65 M27,-59 L31,-58", "#B98A6E", .5)
     if mouth == "smile":
         o += ln("M-10,-42 Q0,-34 10,-42", MOUTH, .9)
     elif mouth == "open":
@@ -132,7 +130,7 @@ def face(mouth="smile", lx=.5, ly=1.2, brows=None, wrinkles=False, cheek=True, e
 
 def person(skin, top, pants, shoe="#3B3446", hair_back="", hair_front="", hat="", behind="", sleeve=None,
            short=False, cuff=None, top_ol=None, inner="", over="", length=56, flare=2, mouth="smile", brows=None,
-           wrinkles=False, boots=None, leg_cuff=None, ears=True, hands_over="", sleeve_pattern=""):
+           boots=None, leg_cuff=None, ears=True, hands_over="", sleeve_pattern=""):
     """A grown-up in person units (feet on y = FOOT). The hooks add clothes and hair:
     hair_back (behind the head), behind (behind the head, in front of the back hair: a comb),
     inner (clipped to the top: pockets, stripes), over (on the top: apron, bag), hair_front, hat."""
@@ -146,19 +144,12 @@ def person(skin, top, pants, shoe="#3B3446", hair_back="", hair_front="", hat=""
     o += neck(skin, sko)
     o += behind
     o += head(skin, sko, ears)
-    o += face(mouth, brows=brows, wrinkles=wrinkles)
+    o += face(mouth, brows=brows)
     o += hair_front + hat
     return o
 
 
 # ---------------------------------------------------------------- hair
-def hair_short(col, part_x=-8):
-    """Short hair: a cap over the top of the head with a soft fringe."""
-    d = (f"M-43,-56 C-48,-92 -22,-110 2,-109 C30,-108 48,-90 43,-56 C41,-68 36,-76 28,-80 "
-         f"C22,-74 12,-74 {part_x + 6},-82 C{part_x - 4},-74 -24,-74 -34,-72 C-38,-68 -41,-62 -43,-56Z")
-    return part(d, col, s=(-3, -4), hl=hi("M-24,-98 C-14,-104 -2,-105 8,-104", 3.5, .45))
-
-
 def hair_bun(col):
     o = part(ell(0, -108, 17, 16), col, s=(-3, -3), hl=hi("M-8,-117 C-4,-121 2,-121 6,-119", 3, .45))
     o += part(rr(-12, -97, 24, 7, 3.5), "#FF7FA3", s=None)
@@ -181,7 +172,7 @@ def firefighter():
     inner += part(rr(-4, -10, 8, 8, 2), "#5A4A3A", s=None) + part(rr(-4, 16, 8, 8, 2), "#5A4A3A", s=None)
     collar = part("M-24,-22 L-6,-22 L0,-8 L-18,-6 Z", coat, s=None) + part("M24,-22 L6,-22 L0,-8 L18,-6 Z", coat, s=None)
     o = person(skin, coat, "#3E4A6B", shoe="#2E2A3A", inner=inner, over=collar, boots="#2E2A3A",
-               cuff=band, mouth="open", hat=g(helmet(), "translate(0 -100) scale(.78)"),
+               cuff=band, mouth="open", hat=at(helmet, 0, -100, .78),
                hair_front=part("M-40,-74 C-40,-84 -30,-90 -22,-90 L-30,-74Z", "#2E2230", s=None)
                + part("M40,-74 C40,-84 30,-90 22,-90 L30,-74Z", "#2E2230", s=None))
     return o
@@ -239,10 +230,10 @@ def chef():
     o = person(skin, coat, pants, shoe="#2E2A3A", top_ol=WHITE_OL, inner=inner, over=over, hair_front=hair,
                mouth="grin", hat=toque())
     # the checks go on the legs below the apron (which stops at y = 76)
-    return o + clipped_checks(checks, pants) + stache
+    return o + clipped_checks(checks) + stache
 
 
-def clipped_checks(checks, pants):
+def clipped_checks(checks):
     """Black-and-white chef trousers: little white checks clipped to the two legs below the apron."""
     d = " ".join(rr(sx * 16 - 11, 76, 22, 20, 0) for sx in (-1, 1))
     return clipped(d, checks)
@@ -425,6 +416,8 @@ def hairdresser():
     a = "M-26,-14 L26,-14 L28,10 L36,14 L38,70 Q38,74 34,74 L-34,74 Q-38,74 -38,70 L-36,14 L-28,10 Z"
     over = ln("M-24,-14 C-24,-22 -20,-26 -16,-30 M24,-14 C24,-22 20,-26 16,-30", apron, 1.6)
     over += part(a, apron, s=(-5, -6), hl=hi("M-30,20 L-30,60", 3, .25))
+    over += at(lambda: combd(0, 0, 0, "#FFD43B"), -20, 30, .62, rot=-78)
+    over += part("M14,40 L18,22 Q19,18 22,20 L26,24 L22,40 Z", "#5BC0F8", s=None)
     for sx in (-1, 1):
         over += part(rr(sx * 18 - 13, 34, 26, 22, 4), lt(apron, .12), s=None, ol=lin(apron))
     over += ln("M0,34 L0,56", lin(apron), .7)
@@ -560,14 +553,15 @@ def rabbit():
     for sx in (-1, 1):
         o += part(ell(sx * 24, 76, 18, 10), fur, s=(-2, -3), sh=sh, ol=ol)
         o += flat(ell(sx * 24, 78, 8, 4.5), pink, op=.8)
-        o += part(ell(sx * 16, 14, 9, 11), fur, s=(-2, -2), sh=sh, ol=ol)
+        o += part(ell(sx * 11, 24, 8.5, 7), fur, s=(-2, -2), sh=sh, ol=ol)
+        o += ln(f"M{sx * 11 - 3},{29} L{sx * 11 - 3},{26} M{sx * 11 + 3},{29} L{sx * 11 + 3},{26}", ol, .5)
     head_d = ell(0, -44, 46, 40)
     o += part(head_d, fur, s=(-7, -8), sh=sh, ol=ol, hl=hi("M-28,-70 C-18,-78 -6,-82 6,-81", 5, .9))
     o += eye(-18, -48, 9, 10.5, .5, 1.5, pc=PUPIL, ol="#5A4A6A") + eye(18, -48, 9, 10.5, .5, 1.5, pc=PUPIL, ol="#5A4A6A")
     o += blush(-30, -30, 8, 5, op=.6) + blush(30, -30, 8, 5, op=.6)
     o += part("M-6,-32 C-6,-36 6,-36 6,-32 C6,-28 2,-26 0,-26 C-2,-26 -6,-28 -6,-32Z", "#FF7FA3", s=None, ol="#D9566F", k=.6)
-    o += ln("M0,-26 L0,-21 M-9,-18 Q-4,-14 0,-20 Q4,-14 9,-18", "#7A4A5A", .8)
-    o += part(rr(-4.5, -20, 9, 7, 1.5), "#FFFFFF", s=None, ol="#9A90B4", k=.5)
+    o += part(rr(-4, -18.5, 8, 6.5, 1.5), "#FFFFFF", s=None, ol="#B7AECB", k=.45) + ln("M0,-18 L0,-12.5", "#B7AECB", .4)
+    o += ln("M0,-26 L0,-20 M-9,-19 Q-4,-15 0,-20 Q4,-15 9,-19", "#7A4A5A", .8)
     return o
 
 
@@ -644,14 +638,21 @@ def thing(name, box, rot=0, k=1.0, dx=0.0, dy=0.0):
     return reg
 
 
-@thing("hose", (-74, -64, 78, 52), k=1.062, dx=-4.2, dy=-0.5)
+@thing("hose", (-74, -64, 78, 66), k=1.049, dx=-3.1, dy=4.2)
 def hose_coil(col="#F04A3E"):
     """A coiled fire hose with a nozzle (the mockup's)."""
     o = ""
-    for y in (22, 8, -6):
-        o += hose(ell(-4, y, 52, 22), col, 12)
-        o += hi(f"M-30,{y + 18} C-14,{y + 22} 8,{y + 22} 24,{y + 19}", 2.6, .45)
-    o += hi("M-44,-14 C-30,-26 -10,-29 10,-28", 3, .7)
+    rx, ry, w = 54, 30, 12
+    e = K.OLW * .9 / K.SCALE + w / 2          # half the hose's width, its edge included
+    hole = "M-5000,-5000 H5000 V5000 H-5000Z " + ell(-4, -8, rx - e, ry - e)
+    lower = ""
+    for y in (20, 6):
+        lower += hose(ell(-4, y, rx, ry), col, w)
+        lower += hi(f"M-30,{y + ry - 4} C-14,{y + ry} 8,{y + ry} 24,{y + ry - 3}", 2.6, .45)
+    o += clipped(hole, lower, fr=True)
+    o += hose(ell(-4, -8, rx, ry), col, w)
+    o += hi("M-30,{0} C-14,{1} 8,{1} 24,{2}".format(-8 + ry - 4, -8 + ry, -8 + ry - 3), 2.6, .45)
+    o += hi("M-46,-20 C-34,-34 -12,-38 8,-37", 3, .7)
     o += hose("M48,-6 C60,-14 62,-32 54,-40", col, 12)
     o += part(rr(42, -16, 14, 14, 3), GOLD, s=None)
     noz = "M44,-42 L60,-54 C64,-57 70,-52 67,-48 L56,-34 Z"
@@ -774,9 +775,11 @@ def letter():
         c = "#F2463F" if k % 2 == 0 else "#3D8BF2"
         edge += flat(f"M{-w / 2 - 2},{y} l0,8 l9,-6 l0,-8 Z", c) + flat(f"M{w / 2 + 2},{y} l0,8 l-9,-6 l0,-8 Z", c)
         k += 1
-    inner = edge
-    inner += ln(f"M{-w / 2 + 6},{-h / 2 + 8} L0,8 L{w / 2 - 6},{-h / 2 + 8}", WHITE_OL, .8)
-    o = comp(env, "#FFFFFF", inner, s=(-6, -7), ol=WHITE_OL, sh="#E1DCF0")
+    flap = f"M{-w / 2 + 3},{-h / 2 + 4} L0,10 L{w / 2 - 3},{-h / 2 + 4} Z"
+    body = part(env, "#FFFFFF", s=(-6, -7), ol=False, sh="#E1DCF0")
+    o = f'<g opacity=".6">{body}</g>'
+    o += clipped(env, edge + part(flap, "#FFFFFF", s=(-3, -4), sh="#E1DCF0", ol=WHITE_OL, k=.8))
+    o += stroke(env, WHITE_OL)
     # the stamp: a white zigzag edge round a picture of a little sun and hill
     st = ""
     sx0, sy0, sw_, sh_ = 34, -40, 34, 40
@@ -831,11 +834,11 @@ def glasses():
     return o
 
 
-@thing("schoolbag", (-64, -86, 64, 86), k=0.950, dx=0, dy=3.3)
+@thing("schoolbag", (-64, -102, 64, 86), k=0.983, dx=0, dy=0.5)
 def schoolbag():
     """A child's backpack: a carry loop on top, straps, a big front pocket."""
     col, strap, pk = "#3D8BF2", "#2A5FB0", "#FFC233"
-    o = hose("M-20,-68 C-20,-92 20,-92 20,-68", strap, 7)
+    o = hose("M-20,-70 C-22,-104 22,-104 20,-70", strap, 7)
     for sx in (-1, 1):
         o += part(rr(sx * 58 - 7, -50, 14, 112, 6), strap, s=None)
     body = "M-50,-56 C-50,-74 -34,-78 0,-78 C34,-78 50,-74 50,-56 L52,64 C52,80 40,84 0,84 C-40,84 -52,80 -52,64 Z"
@@ -881,11 +884,6 @@ def paintbrush():
     o += ln("M-16,-26 L16,-26 M-16,-20 L16,-20", STEEL_D, .6)
     return o
 
-
-def drop_d(x, y, s=1.0):
-    p = lambda a, b: f"{n(x + a * s)},{n(y + b * s)}"
-    return (f"M{p(0, 0)} C{p(4, 9)} {p(8, 15)} {p(8, 19)} C{p(8, 24)} {p(4, 27)} {p(0, 27)} "
-            f"C{p(-4, 27)} {p(-8, 24)} {p(-8, 19)} C{p(-8, 15)} {p(-4, 9)} {p(0, 0)}Z")
 
 
 # ================================================================ writing and checking
@@ -1001,3 +999,123 @@ def scene_street():
     o += flat(rr(0, 581, W, H - 581, 0), "#CBD2DE")
     o += flat(rr(30, 590, 40, 4, 2), "#F2F4F8") + flat(rr(150, 590, 40, 4, 2), "#F2F4F8") + flat(rr(270, 590, 40, 4, 2), "#F2F4F8")
     return o
+
+
+# ================================================================ preview (needs Node.js + Playwright)
+TRAY = "#FFF1D6"       # the shelf card the things wait on
+BUBBLE_INK = "rgba(154,140,192,.6)"   # the app's ColorFilter(0x999A8CC0, srcIn) for the wanted thing
+
+
+def _uri(name):
+    return (OUT / f"{name}.svg").as_uri()
+
+
+def _data(name):
+    return "data:image/svg+xml;base64," + base64.b64encode((OUT / f"{name}.svg").read_bytes()).decode()
+
+
+def board(people, w=390, h=600):
+    """HTML of the 是誰的？ board laid out the way owner_game.dart does it: the street, a column per
+    owner (a thought bubble with a pale silhouette of the wanted thing over the owner) and the tray."""
+    tray_h = max(100.0, min(180.0, h * .24))
+    scene_h = h - tray_h - 6
+    col = min((w - 16) / len(people), scene_h * .62)
+    left = (w - col * len(people)) / 2
+    o = [f'<div style="position:relative;width:{w}px;height:{h}px;background:#FFF8EE;overflow:hidden">',
+         f'<div style="position:absolute;left:8px;top:0;width:{w - 16}px;height:{scene_h}px;border-radius:18px;overflow:hidden;'
+         f'background:url({_uri("scene_street")}) center/cover no-repeat"></div>']
+    wants = {o_: t for o_, t in OWNER_WANTS.items()}
+    for i, pid in enumerate(people):
+        x, y, cw, ch = left + i * col + 3, scene_h * .04, col - 6, scene_h * .94
+        th, ah = ch * 4 / 11, ch * 7 / 11
+        s = min(cw, th) * .92
+        pad = s * .16
+        o.append(f'<div style="position:absolute;left:{x + (cw - s) / 2}px;top:{y + (th - s) / 2}px;width:{s}px;height:{s}px;'
+                 f'box-sizing:border-box;border-radius:50%;background:rgba(255,255,255,.85);border:2.5px solid #B9A6E0"></div>')
+        m = _data(wants[pid])
+        o.append(f'<div style="position:absolute;left:{x + (cw - s) / 2 + pad}px;top:{y + (th - s) / 2 + pad}px;width:{s - 2 * pad}px;'
+                 f'height:{s - 2 * pad}px;background:{BUBBLE_INK};-webkit-mask:url({m}) center/contain no-repeat"></div>')
+        a = min(cw, ah)
+        o.append(f'<img src="{_uri(pid)}" style="position:absolute;left:{x + (cw - a) / 2}px;top:{y + th + (ah - a) / 2}px;'
+                 f'width:{a}px;height:{a}px">')
+    things = [OWNER_WANTS[p] for p in people]
+    cell = min((w - 24) / len(things), tray_h - 16)
+    size = cell * .82
+    top = h - tray_h
+    o.append(f'<div style="position:absolute;left:8px;right:8px;top:{top}px;bottom:0;border-radius:22px;background:{TRAY};'
+             f'border:2.5px solid #C7B8E6;box-shadow:0 5px 0 #B9A6E0"></div>')
+    for i, t in enumerate(reversed(things)):
+        cx = w / 2 + (i - (len(things) - 1) / 2) * cell
+        o.append(f'<img src="{_uri(t)}" style="position:absolute;left:{cx - size / 2}px;top:{top + tray_h / 2 - size / 2}px;'
+                 f'width:{size}px;height:{size}px">')
+    o.append("</div>")
+    return "".join(o)
+
+
+OWNER_WANTS = {
+    "firefighter": "hose", "doctor": "stethoscope", "chef": "spatula", "baby": "baby_bottle", "dog": "bone",
+    "rabbit": "carrot", "cat": "fish", "police": "whistle", "mail_carrier": "letter", "farmer": "hoe",
+    "grandpa": "glasses", "sister": "schoolbag", "hairdresser": "scissors", "painter": "paintbrush",
+}
+
+
+RENDER_FULL = """
+const { chromium } = require('playwright');
+(async () => {
+  const [inp, out] = process.argv.slice(1);
+  const b = await chromium.launch();
+  const pg = await b.newPage({ viewport: { width: 1590, height: 900 }, deviceScaleFactor: 1 });
+  await pg.goto('file://' + inp);
+  await pg.waitForTimeout(400);
+  await pg.screenshot({ path: out, fullPage: true });
+  await b.close();
+})();
+"""
+
+
+def preview(out):
+    """A contact sheet: every owner and thing at 200 px and at 120 px, the street, a line-up of all
+    owners on the pavement, and boards of 4 and 3 owners as the game shows them."""
+    owners = list(OWNERS)
+    things = [OWNER_WANTS[o_] for o_ in owners]
+
+    def tile(nm, s, bg):
+        return (f'<div class="t"><div class="c" style="width:{s + 12}px;height:{s + 12}px;background:{bg}">'
+                f'<img src="{_uri(nm)}" width="{s}" height="{s}"></div><div class="n">{nm}</div></div>')
+
+    h = ['<html><head><meta charset="utf-8"><style>body{margin:0;padding:14px;background:#E9E4F2;font:13px sans-serif;'
+         'color:#4B3A5E;width:1560px}.row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:flex-end}'
+         '.t{text-align:center}.c{border-radius:12px;display:flex;align-items:center;justify-content:center;'
+         'box-shadow:0 2px 3px #0002}h2{margin:8px 0 6px;font-size:16px}.n{margin-top:2px}</style></head><body>']
+    h.append("<h2>owners, 200 px, on a cream card (the game shows them about 90-190 px wide)</h2><div class='row'>"
+             + "".join(tile(x, 200, "#F4F0E8") for x in owners) + "</div>")
+    h.append("<h2>owners, 120 px, on white</h2><div class='row'>" + "".join(tile(x, 120, "#FFFFFF") for x in owners) + "</div>")
+    h.append("<h2>things, 200 px, on the tray colour</h2><div class='row'>" + "".join(tile(x, 200, TRAY) for x in things) + "</div>")
+    h.append("<h2>things, 120 px, on white, and as the bubble's pale silhouette</h2><div class='row'>"
+             + "".join(tile(x, 120, "#FFFFFF") for x in things) + "</div><div class='row'>"
+             + "".join(f'<div class="t"><div class="c" style="width:132px;height:132px;background:#FFFFFF;border-radius:50%">'
+                       f'<div style="width:90px;height:90px;background:{BUBBLE_INK};-webkit-mask:url({_data(x)}) center/contain no-repeat">'
+                       f'</div></div><div class="n">{x}</div></div>' for x in things) + "</div>")
+    line = "".join(f'<img src="{_uri(x)}" width="108" height="108" style="margin:0 -2px">' for x in owners)
+    h.append("<h2>all owners in a row on the street (same ground line)</h2><div class='row'>"
+             f'<div style="width:1500px;height:150px;background:url({_uri("scene_street")}) 0 -330px/1500px auto;'
+             f'border-radius:12px;padding-top:34px;box-sizing:border-box;white-space:nowrap">{line}</div></div>')
+    h.append("<h2>scene_street (390 x 600) and the game board, phone size: 4 owners, 3 owners, 2 owners</h2><div class='row'>"
+             f'<img src="{_uri("scene_street")}" width="390" height="600">'
+             + board(["firefighter", "doctor", "dog", "sister"]) + board(["chef", "baby", "rabbit"])
+             + board(["hairdresser", "cat"]) + "</div>")
+    h.append("</body></html>")
+    with tempfile.TemporaryDirectory() as tmp:
+        p = pathlib.Path(tmp) / "preview.html"
+        p.write_text("".join(h))
+        subprocess.run(["node", "-e", RENDER_FULL, str(p), str(out)], check=True)
+    return out
+
+
+if __name__ == "__main__":
+    a = sys.argv[1:]
+    if a and a[0] == "preview":
+        print(preview(pathlib.Path(a[1]).resolve()))
+    else:
+        for k_, v in build(set(a) or None).items():
+            print(f"{k_}: {v:.1f} KB")
