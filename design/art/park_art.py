@@ -1140,28 +1140,28 @@ def place_c(name, cx, cy, w, h, **kw):
 
 
 # ---------------------------------------------------------------- the free spots the app fills
-# centre (x, y) and size (w, h) in map pixels (390 x 844)
+# centre (x, y) and size (w, h) in map pixels (390 x 844); park_spots.json has them as fractions
 SPOTS = {
     "title": (195, 87, 222, 58),
-    "odd": (100, 266, 117, 59),
-    "next": (236, 380, 117, 59),
-    "blocks": (110, 418, 101, 42),
-    "detective": (284, 462, 117, 59),
-    "pairs": (118, 520, 117, 59),
-    "forest": (250, 584, 101, 42),
-    "sort": (72, 742, 117, 59),
-    "owner": (318, 786, 117, 59),
-    "city": (205, 718, 101, 42),
-    "abu": (205, 790, 94, 101),
+    "odd": (106, 258, 117, 59),
+    "next": (292, 368, 117, 59),
+    "blocks": (113, 384, 101, 42),
+    "detective": (316, 484, 117, 59),
+    "pairs": (76, 528, 117, 59),
+    "forest": (150, 590, 101, 42),
+    "sort": (72, 744, 117, 59),
+    "owner": (318, 790, 117, 59),
+    "city": (205, 720, 101, 42),
+    "abu": (205, 792, 94, 101),
 }
 BUTTONS = {"book": (78, 816, 132, 40), "parents": (337, 28, 74, 32)}
 
-MAP_PATH = [(205, 880), (205, 806), (190, 756), (150, 712), (150, 664), (214, 630), (246, 600), (238, 560),
-            (196, 532), (206, 494), (198, 458), (146, 452), (110, 432), (104, 408), (126, 376), (170, 350),
-            (226, 334), (274, 312), (314, 296)]
-FOREST_TOP = 438      # the torn paper edge between 積木王國 and 紙片森林
-FOREST_BOTTOM = 640   # the paper grass edge between 紙片森林 and 卡通城
-BLOCKS_TOP = 214      # the row of coloured bricks between the sky and 積木王國
+MAP_PATH = [(205, 880), (205, 800), (204, 756), (184, 714), (150, 686), (138, 652), (148, 614), (176, 590),
+            (228, 572), (254, 546), (236, 516), (190, 498), (146, 482), (120, 456), (112, 420), (118, 384),
+            (140, 350), (190, 330), (246, 318), (292, 304), (316, 296)]
+BLOCKS_TOP = 204      # the row of coloured bricks between the sky and 積木王國
+FOREST_TOP = 448      # the torn paper edge between 積木王國 and 紙片森林
+FOREST_BOTTOM = 648   # the paper grass edge between 紙片森林 and 卡通城
 
 
 def map_svg(night_=False):
@@ -1170,14 +1170,11 @@ def map_svg(night_=False):
     o = []
     # ---- the sky
     if night_:
-        sky = lg([(0, "#0D1433"), (.35, "#1A2656"), (1, "#2B3B78")])
-        o.append(LIT0 + f'<rect width="{W}" height="{H}" fill="{sky}"/>' + LIT1)
+        sky = lg([(0, "#0D1433"), (.3, "#1A2656"), (1, "#2B3B78")])
+        o.append(LIT0 + f'<rect width="{W}" height="{H}" fill="{sky}"/>' + night_sky() + LIT1)
     else:
         o.append(f'<rect width="{W}" height="{H}" fill="{lg([(0, "#BFE4FF"), (.25, "#E2F3FF"), (1, "#EEF8FF")])}"/>')
-    if night_:
-        o.append(LIT0 + night_sky() + LIT1)
-    else:
-        o.append("".join(f'<path d="{cloud_d(x, y, s)}" fill="#FFFFFF" opacity=".9"/>' for x, y, s in ((44, 182, .45), (352, 168, .38), (196, 166, .3))))
+        o.append("".join(f'<path d="{cloud_d(x, y, s)}" fill="#FFFFFF" opacity=".9"/>' for x, y, s in ((40, 172, .42), (210, 160, .3))))
     # ---- the title: an empty rainbow arch with a blank plank (the app writes the name on it)
     for i, c in enumerate(("#FF7A6E", "#FFD166", "#7CC7FF")):
         o.append(f'<path d="M{70 + i * 9},126 A{125 - i * 9},{98 - i * 8} 0 0 1 {320 - i * 9},126" fill="none" stroke="{c}" stroke-width="9"/>')
@@ -1196,60 +1193,56 @@ def map_svg(night_=False):
     o.append("".join(f'<rect x="{x}" y="{BLOCKS_TOP - 6}" width="20" height="11" rx="2" fill="{cols[(x // 22) % 4]}"/>' for x in range(0, W, 22)))
     # ---- 卡通城 ground: cartoon grass
     o.append(f'<rect x="0" y="{FOREST_BOTTOM - 20}" width="{W}" height="{H - FOREST_BOTTOM + 20}" fill="{lg([(0, "#A3DE88"), (1, "#B2E79A")])}"/>')
-    for x, y in ((24, 808), (172, 664), (268, 708), (300, 838), (128, 820), (40, 676), (360, 708), (140, 774)):
-        o.append(f'<path d="M{x - 8},{y} Q{x - 6},{y - 9} {x - 2},{y - 2} Q{x},{y - 12} {x + 3},{y - 2} Q{x + 7},{y - 9} {x + 9},{y}" '
-                 f'fill="none" stroke="#6DBE57" stroke-width="2" stroke-linecap="round"/>')
+    tufts = "".join(f"M{x - 8},{y} Q{x - 6},{y - 9} {x - 2},{y - 2} Q{x},{y - 12} {x + 3},{y - 2} Q{x + 7},{y - 9} {x + 9},{y}"
+                    for x, y in ((24, 808), (260, 838), (134, 790), (178, 690), (370, 830), (250, 768), (36, 700)))
+    o.append(f'<path d="{tufts}" fill="none" stroke="#6DBE57" stroke-width="2" stroke-linecap="round"/>')
     # ---- 紙片森林 ground: paper, torn along the top, grass blades along the bottom
     SC = 1.0
     o.append(forest_ground())
     # ---- the path (one for the whole park)
-    d = "M" + " L".join(f"{n(x)},{n(y)}" for x, y in spline(MAP_PATH, 8))
-    o.append(f'<path d="{d}" fill="none" stroke="#D9B87C" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>'
-             f'<path d="{d}" fill="none" stroke="#FAE8C2" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>'
-             f'<path d="{d}" fill="none" stroke="#EFD49E" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 15"/>')
+    k = shape("M" + " L".join(f"{n(x)},{n(y)}" for x, y in spline(MAP_PATH, 7)))
+    o.append(use(k, 'fill="none" stroke="#D9B87C"', ' stroke-width="40" stroke-linecap="round" stroke-linejoin="round"')
+             + use(k, 'fill="none" stroke="#FAE8C2"', ' stroke-width="32" stroke-linecap="round" stroke-linejoin="round"')
+             + use(k, 'fill="none" stroke="#EFD49E"', ' stroke-width="5" stroke-linecap="round" stroke-dasharray="1 15"'))
     # ---- 積木王國 (style C)
-    o.append(place_c("castle", 316, 214, 136, 162))
-    o.append(place_c("tower", 30, 300, 44, 118, cols=(CR, CB, CY, CG)))
-    o.append(place_c("tower", 360, 352, 30, 80, cols=(CG, CY, CB, CR)))
-    o.append(f'<rect x="0" y="420" width="{W}" height="5" fill="{C_DK}"/>'
-             + f'<path d="{"".join(f"M{x},422h8v6h-8Z" for x in range(4, W, 16))}" fill="#C99A6B"/>')
-    o.append(place_c("engine", 286, 400, 70, 44))
-    o.append(place_c("wagon", 340, 404, 46, 36, col=CY, load="circle") + place_c("wagon", 386, 404, 46, 36, col=CG, load="square"))
-    o.append(place_c("wagon", 232, 404, 46, 36, col=CB, load="triangle"))
-    # small blocks lying about
-    o.append(f'<rect x="168" y="232" width="20" height="20" rx="3" fill="{CY}" transform="rotate(12 178 242)"/>'
-             f'<path d="M196,254 L208,232 L220,254Z" fill="{CG}" stroke="{CG}" stroke-width="3" stroke-linejoin="round"/>'
-             f'<circle cx="22" cy="384" r="9" fill="{CB}"/><rect x="34" y="378" width="14" height="14" rx="2" fill="{CR}"/>')
-    # gate of 積木王國: two block pillars (the app puts the land label on top)
-    o.append(gate_c(SPOTS["blocks"][0], SPOTS["blocks"][1] + 16, 452 - 16))
+    o.append(place_c("castle", 318, 214, 134, 160))
+    o.append(place_c("tower", 26, 298, 40, 110, cols=(CR, CB, CY, CG)))
+    o.append(place_c("tower", 372, 352, 26, 70, cols=(CG, CY, CB, CR)))
+    o.append(f'<rect x="196" y="438" width="{W - 196}" height="5" fill="{C_DK}"/>'
+             + f'<path d="{"".join(f"M{x},440h8v6h-8Z" for x in range(200, W, 16))}" fill="#C99A6B"/>')
+    o.append(place_c("wagon", 222, 424, 42, 33, col=CB, load="triangle"))
+    o.append(place_c("engine", 274, 418, 66, 42))
+    o.append(place_c("wagon", 330, 424, 42, 33, col=CY, load="circle") + place_c("wagon", 374, 424, 42, 33, col=CG, load="square"))
+    o.append(f'<rect x="196" y="236" width="20" height="20" rx="3" fill="{CY}" transform="rotate(12 206 246)"/>'
+             f'<path d="M222,258 L233,238 L244,258Z" fill="{CG}" stroke="{CG}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+             f'<circle cx="22" cy="414" r="9" fill="{CB}"/><rect x="34" y="420" width="14" height="14" rx="2" fill="{CR}" transform="rotate(-8 41 427)"/>'
+             f'<circle cx="196" cy="390" r="7" fill="{CP}"/>')
+    o.append(gate_c(SPOTS["blocks"][0], SPOTS["blocks"][1] + 16, FOREST_TOP - 2))
     # ---- 紙片森林 (style B)
     make_grain_map()
-    o.append(place("pond", 66, 594, 116, 54, style="B"))
-    for x, y, sz, k, c, lan in ((360, 506, 66, "pine", "#6BAF62", True), (384, 548, 46, "round", "#7DBB6A", False),
-                                (26, 470, 50, "pine", "#5FA35A", False), (176, 596, 40, "round", "#76B565", True),
-                                (342, 616, 34, "pine", "#5FA35A", False)):
-        o.append(place("ptree", x, y, sz, sz * 1.62, style="B", kind=k, col=c))
+    o.append(place("pond", 52, 612, 96, 46, style="B"))
+    for x, y, sz, kd, c, lan in ((26, 494, 46, "pine", "#5FA35A", True), (368, 550, 54, "pine", "#6BAF62", True),
+                                 (226, 470, 40, "round", "#7DBB6A", False), (250, 626, 36, "round", "#76B565", True),
+                                 (306, 610, 30, "pine", "#5FA35A", False), (388, 600, 40, "round", "#7DBB6A", False)):
+        o.append(place("ptree", x, y, sz, sz * 1.62, style="B", kind=kd, col=c))
         if lan:
-            o.append(place("lantern", x - sz * .28, y + sz * .15, 13, 20, style="B"))
-    o.append(place("lantern", 40, 486, 12, 19, style="B"))
-    o.append(place("mushroom", 318, 548, 34, 34, style="B"))
-    o.append(place("mushroom", 18, 540, 22, 22, style="B"))
-    for x, y in ((160, 470), (330, 470), (200, 618)):
+            o.append(place("lantern", x + (sz * .3 if x < 200 else -sz * .3), y + sz * .12, 12, 19, style="B"))
+    o.append(place("mushroom", 344, 622, 26, 26, style="B"))
+    o.append(place("mushroom", 196, 534, 22, 22, style="B"))
+    for x, y in ((150, 568), (330, 534), (12, 568)):
         o.append(place("pgrass", x, y, 26, 12, style="B"))
-    o.append(gate_b(SPOTS["forest"][0], SPOTS["forest"][1] + 16, 646))
+    o.append(gate_b(SPOTS["forest"][0], SPOTS["forest"][1] + 16, FOREST_BOTTOM + 4))
     if night_:
         o.append(fireflies())
     # ---- 卡通城 (style A)
-    o.append(place("house", 36, 690, 60, 64))
-    o.append(place("house", 92, 704, 48, 52, col="#FFD166", roof="#FF7A6E"))
-    o.append(place("firestation", 318, 696, 132, 128))
-    for x, y, s in ((256, 760, 30), (382, 770, 34), (14, 770, 28), (134, 664, 24)):
+    o.append(place("house", 36, 680, 60, 64))
+    o.append(place("house", 94, 692, 48, 52, col="#FFD166", roof="#FF7A6E"))
+    o.append(place("firestation", 322, 690, 134, 122))
+    for x, y, s in ((256, 744, 26), (14, 762, 26), (140, 724, 22)):
         o.append(place("bush", x, y, s * 1.4, s))
-    for x, y, c in ((112, 756, "#FF7FA3"), (124, 760, "#FFD43B"), (262, 832, "#9B8CFF"), (380, 828, "#FF7FA3")):
+    for x, y, c in ((138, 766, "#FF7FA3"), (150, 772, "#FFD43B"), (270, 832, "#9B8CFF"), (382, 834, "#FF7FA3")):
         o.append(place("flower", x, y, 8, 22, sw=1.2, col=c))
-    o.append(place("lamp", 252, 650, 14, 58, sw=1.4))
-    o.append(place("lamp", 150, 790, 14, 58, sw=1.4))
-    o.append(gate_a(SPOTS["city"][0], SPOTS["city"][1] + 16, 802))
+    o.append(gate_a(SPOTS["city"][0], SPOTS["city"][1] + 16, 804))
     body = "".join(o)
     SC, STYLE, GRAIN = 1.0, "A", None
     if night_:
@@ -1345,8 +1338,8 @@ def night_sky():
     rnd = random.Random(42)
     o = []
     # the crescent moon
-    o.append(glow(40, 170, 46, "#FFF1B8", .35).replace(LIT0, "").replace(LIT1, ""))
-    o.append('<path d="M52,148 A26,26 0 1 0 60,190 A20,20 0 1 1 52,148Z" fill="#FFE9A8"/>')
+    o.append(glow(44, 168, 48, "#FFF1B8", .35).replace(LIT0, "").replace(LIT1, ""))
+    o.append('<path d="M56,146 A26,26 0 1 0 64,188 A20,20 0 1 1 56,146Z" fill="#FFE9A8"/>')
     stars = []
     tries = 0
     while len(stars) < 46 and tries < 2000:
