@@ -521,9 +521,9 @@ def torn(d, amp=1.1, step=2.6, wave=20.0, bbox=False):
 PSH = "#4A3420"        # the colour of paper shadows
 
 
-def paper(d, fill, op=None, grain=True, sh=1.0):
+def paper(d, fill, op=None, grain=True, sh=1.0, step=None):
     """Style B: one paper layer (torn edge, soft shadow under it, grain), no outline."""
-    td, (x0, y0, x1, y1) = torn(d, step=3.4 if ONE_SHADOW else 2.6, bbox=True)
+    td, (x0, y0, x1, y1) = torn(d, step=step or (3.4 if ONE_SHADOW else 2.6), bbox=True)
     k = shape(td)
     o_ = f' opacity="{op}"' if op is not None else ""
     c = mute(fill)
@@ -1292,17 +1292,16 @@ def forest_ground():
     global GRAIN, STYLE, GRAIN_T
     STYLE, GRAIN_T = "B", 64.0
     ground = top + f" L400,{FOREST_BOTTOM} {blades} Z"
-    global ONE_SHADOW
-    o = paper(ground, "#A9D08E", grain=False)
+    o = paper(ground, "#A9D08E", grain=False, step=3.4)
     o += paper(f"M-10,{FOREST_TOP + 70} C60,{FOREST_TOP + 46} 130,{FOREST_TOP + 66} 176,{FOREST_TOP + 100} "
-               f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F", grain=False)
+               f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F", grain=False, step=3.4)
     o += paper(f"M240,{FOREST_TOP + 22} C300,{FOREST_TOP + 6} 360,{FOREST_TOP + 12} 400,{FOREST_TOP + 28} "
-               f"L400,{FOREST_TOP + 74} C340,{FOREST_TOP + 74} 280,{FOREST_TOP + 56} 240,{FOREST_TOP + 22}Z", "#97C47C", grain=False)
+               f"L400,{FOREST_TOP + 74} C340,{FOREST_TOP + 74} 280,{FOREST_TOP + 56} 240,{FOREST_TOP + 22}Z", "#97C47C", grain=False, step=3.4)
     o += paper(f"M200,{FOREST_BOTTOM - 40} C250,{FOREST_BOTTOM - 62} 330,{FOREST_BOTTOM - 60} 400,{FOREST_BOTTOM - 46} "
-               f"L400,{FOREST_BOTTOM - 4} C320,{FOREST_BOTTOM - 10} 250,{FOREST_BOTTOM - 14} 200,{FOREST_BOTTOM - 40}Z", "#9CC985", grain=False)
+               f"L400,{FOREST_BOTTOM - 4} C320,{FOREST_BOTTOM - 10} 250,{FOREST_BOTTOM - 14} 200,{FOREST_BOTTOM - 40}Z", "#9CC985", grain=False, step=3.4)
     # the fibres, once over the whole floor (hills included)
-    make_grain(gap=5.5, seed=3)
-    k = shape(torn(ground))
+    make_grain(gap=6.2, seed=3)
+    k = shape(torn(ground, step=3.4))
     T = GRAIN_T
     tiles = "".join(f'<use href="#{GRAIN}" transform="translate({n(i * T)} {n(j * T)})"/>'
                     for j in range(math.floor((FOREST_TOP - 12) / T), math.ceil((FOREST_BOTTOM + 26) / T)) for i in range(0, math.ceil(W / T)))
