@@ -18,6 +18,10 @@ concurrency:
 
 # The fingerprint of the test key the APKs are signed with (the same test key
 # as 畫畫小鎮; see CLAUDE.md).
+# The tests and the build only read the code.
+permissions:
+  contents: read
+
 env:
   TEST_KEY_SHA256: 69a4e28c011a4dd37048f43a2d244173250d28c0ff0c723fffbbd229bc57235d
 

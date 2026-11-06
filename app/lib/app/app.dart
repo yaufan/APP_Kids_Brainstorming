@@ -9,6 +9,7 @@ import '../core/providers.dart';
 import '../core/content.dart';
 import '../features/book/book_screen.dart';
 import '../features/park/park_screen.dart';
+import '../features/parent/parent_gate.dart';
 import '../features/parent/parent_screen.dart';
 import '../features/play/play_screen.dart';
 import '../features/rest/rest_screen.dart';
@@ -19,6 +20,14 @@ final routerProvider = Provider<GoRouter>((ref) {
   final resting = ref.read(gameProvider).resting(ref.read(clockProvider)());
   final router = GoRouter(
     initialLocation: resting ? '/rest' : '/',
+    // Always start here, whatever page another app asks the phone to open.
+    overridePlatformDefaultLocation: true,
+    redirect: (_, state) {
+      final at = state.matchedLocation;
+      if (at == '/parent' && !ParentPass.take()) return '/';
+      if (at.startsWith('/play/') && GameKind.values.asNameMap()[state.pathParameters['game']] == null) return '/';
+      return null;
+    },
     routes: [
       GoRoute(path: '/', builder: (_, _) => const ParkScreen()),
       GoRoute(path: '/play/:game', builder: (_, s) => PlayScreen(game: GameKind.values.byName(s.pathParameters['game']!))),

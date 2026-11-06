@@ -35,7 +35,23 @@ Future<bool> showParentGate(BuildContext context) async {
   final ok = await Navigator.of(context).push<bool>(
     MaterialPageRoute(fullscreenDialog: true, builder: (_) => const ParentGatePage()),
   );
+  if (ok ?? false) ParentPass.grant();
   return ok ?? false;
+}
+
+/// Parent mode opens only right after the gate was answered: the router
+/// takes the pass, so nothing else (a link from another app) can open it.
+abstract final class ParentPass {
+  static var _open = false;
+
+  static void grant() => _open = true;
+
+  /// Whether parent mode may open now (once per right answer).
+  static bool take() {
+    final open = _open;
+    _open = false;
+    return open;
+  }
 }
 
 /// Full screen, so a child cannot tap past it. Three wrong answers in a row
