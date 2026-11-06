@@ -682,7 +682,7 @@ class Picture:
 
 
 def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.5, wl=15.0,
-           grain_density=110, grain_cap=110, specks=True, grain_min=220):
+           grain_density=110, grain_cap=110, specks=True, grain_min=220, shadow_steps=SHADOW_STEPS):
     """Fit the layers into the box (unless `fixed` = (scale, x, y): drawing point (x, y) goes to the
     box centre), tear the edges, add shadows and grain, return the SVG text."""
     W, H = box
@@ -728,7 +728,7 @@ def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.
             defs.append(f'<path id="{pid}" d="{d}"/>')
             k = L["shadow"]
             mul = (L["op"] if L["op"] is not None else 1.0)
-            for dx, dy, o in SHADOW_STEPS:
+            for dx, dy, o in shadow_steps:
                 body.append(f'<use href="#{pid}" {sh_paint(o * mul * min(1, k))} transform="translate({dx * min(1, k * 1.4):.2g} {dy * min(1, k * 1.4):.2g})"/>')
                 uses += 1
             body.append(f'<use href="#{pid}" {paint}/>')

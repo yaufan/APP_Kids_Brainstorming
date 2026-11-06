@@ -1241,7 +1241,7 @@ def map_svg(night_=False):
     # ---- 紙片森林 (style B)
     make_grain_map()
     o.append(place("pond", 52, 612, 96, 46, style="B"))
-    for x, y, sz, kd, c, lan in ((26, 494, 46, "pine", "#5FA35A", True), (368, 550, 54, "pine", "#6BAF62", True),
+    for x, y, sz, kd, c, lan in ((22, 474, 42, "pine", "#5FA35A", True), (368, 550, 54, "pine", "#6BAF62", True),
                                  (226, 470, 40, "round", "#7DBB6A", False), (250, 626, 36, "round", "#76B565", True),
                                  (306, 610, 30, "pine", "#5FA35A", False), (388, 600, 40, "round", "#7DBB6A", False)):
         o.append(place("ptree", x, y, sz, sz * 1.62, style="B", kind=kd, col=c))
@@ -1255,8 +1255,8 @@ def map_svg(night_=False):
     if night_:
         o.append(fireflies())
     # ---- 卡通城 (style A)
-    o.append(place("house", 36, 680, 60, 64))
-    o.append(place("house", 94, 692, 48, 52, col="#FFD166", roof="#FF7A6E"))
+    o.append(place("house", 36, 670, 60, 64))
+    o.append(place("house", 94, 684, 48, 52, col="#FFD166", roof="#FF7A6E"))
     o.append(place("firestation", 322, 690, 134, 122))
     for x, y, s in ((256, 744, 26), (14, 762, 26), (140, 724, 22)):
         o.append(place("bush", x, y, s * 1.4, s))
