@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,36 @@ void main() {
         expect(s.places.map((p) => p.id), contains(t.place), reason: '${s.id} ${t.id}');
       }
     }
+  });
+
+  test('every picture and sound the app asks for exists', () {
+    final missing = <String>[];
+    void svg(String path) {
+      final f = File(path);
+      if (!f.existsSync() || !f.readAsStringSync().trimRight().endsWith('</svg>')) missing.add(path);
+    }
+
+    for (final MapEntry(key: land, value: ids) in pictures.entries) {
+      for (final id in ids) {
+        svg(art(land, id));
+      }
+    }
+    for (final land in Land.values) {
+      for (final pose in ['wave', 'think', 'cheer']) {
+        svg('assets/art/park/abu_${land.name}_$pose.svg');
+      }
+    }
+    svg('assets/art/park/map.svg');
+    svg('assets/art/park/map_night.svg');
+    const sounds = [
+      'music_park', 'music_city', 'music_forest', 'music_blocks', 'music_rest', //
+      'tap', 'pick', 'drop', 'right', 'try', 'bounce', 'sparkle', 'sticker', 'solved', 'poof', 'crayon', 'snap', 'train', 'clue',
+      'blub', 'garbage_truck', 'rest', 'abu_hmm', 'abu_yay', 'thanks_a', 'thanks_b', 'thanks_c', 'say_dog', 'say_cat', 'say_rabbit', 'say_baby',
+    ];
+    for (final s in sounds) {
+      if (!File('assets/sounds/$s.wav').existsSync()) missing.add('sound $s');
+    }
+    expect(missing, isEmpty);
   });
 
   test('放哪裡: places and things grow with the level, every thing has its place', () {

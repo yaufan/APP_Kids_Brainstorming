@@ -78,6 +78,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   GameKind get _game => widget.game;
 
+  /// The round on the screen (tests play it).
+  @visibleForTesting
+  Object get debugRound => _round;
+
   Land get _land => _game.land;
 
   @override
