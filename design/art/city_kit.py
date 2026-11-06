@@ -174,7 +174,8 @@ def begin(ol=OL_THING):
 
 def sw(k=1.0):
     """A stroke width in the current drawing's units: k times the picture's outline."""
-    return n(OLW * k / SCALE) if OLW * k / SCALE >= .1 else f"{OLW * k / SCALE:.2f}"
+    s = f"{OLW * k / SCALE:.2f}".rstrip("0").rstrip(".")
+    return s or "0"
 
 
 def _h(*parts):

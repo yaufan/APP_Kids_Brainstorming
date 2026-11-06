@@ -40,7 +40,7 @@ OUT = ROOT / "app" / "assets" / "art" / "forest"
 
 SHADOW = "#4A3420"      # the shadow under each paper layer
 # (dx, dy, opacity) of the two shadow copies, in units of the 200 x 200 box (scenes: 1 unit = 1 px)
-SHADOW_STEPS = ((1.1, 1.9, .17), (2.3, 3.9, .08))
+SHADOW_STEPS = ((1.1, 1.9, .19), (2.3, 3.9, .09))
 
 
 # ---------------------------------------------------------------- colours (as in the mockups)
