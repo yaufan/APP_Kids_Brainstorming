@@ -1220,7 +1220,7 @@ def map_svg(night_=False):
     SC = 1.0
     o.append(forest_ground())
     # ---- the path (one for the whole park)
-    k = shape("M" + " L".join(f"{n(x)},{n(y)}" for x, y in spline(MAP_PATH, 7)))
+    k = shape(rpoly(spline(MAP_PATH, 7), False))
     o.append(use(k, 'fill="none" stroke="#D9B87C"', ' stroke-width="40" stroke-linecap="round" stroke-linejoin="round"')
              + use(k, 'fill="none" stroke="#FAE8C2"', ' stroke-width="32" stroke-linecap="round" stroke-linejoin="round"')
              + use(k, 'fill="none" stroke="#EFD49E"', ' stroke-width="5" stroke-linecap="round" stroke-dasharray="1 15"'))
@@ -1292,6 +1292,7 @@ def forest_ground():
     global GRAIN, STYLE, GRAIN_T
     STYLE, GRAIN_T = "B", 64.0
     ground = top + f" L400,{FOREST_BOTTOM} {blades} Z"
+    global ONE_SHADOW
     o = paper(ground, "#A9D08E", grain=False)
     o += paper(f"M-10,{FOREST_TOP + 70} C60,{FOREST_TOP + 46} 130,{FOREST_TOP + 66} 176,{FOREST_TOP + 100} "
                f"C120,{FOREST_TOP + 122} 40,{FOREST_TOP + 120} -10,{FOREST_TOP + 116}Z", "#BBDB9F", grain=False)
@@ -1381,11 +1382,14 @@ def night_sky():
         if any(math.hypot(x - a, y - b) < 18 for a, b, _ in stars):
             continue
         stars.append((x, y, rnd.random()))
+    levels = {0: [], 1: [], 2: []}
     for x, y, r in stars:
         if r < .22:
             o.append(f'<path d="{sparkle_d(x, y, 5 + r * 8)}" fill="#FFF3C4"/>')
         else:
-            o.append(f'<circle cx="{n(x)}" cy="{n(y)}" r="{n(.9 + r * 1.3)}" fill="#FFF8DC" opacity="{.55 + r * .4:.2f}"/>')
+            levels[min(2, int((r - .22) / .26))].append(ell(x, y, .9 + r * 1.3))
+    for lv, ds in levels.items():
+        o.append(f'<path d="{"".join(ds)}" fill="#FFF8DC" opacity="{(.6, .78, .95)[lv]}"/>')
     return "".join(o)
 
 

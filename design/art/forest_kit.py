@@ -469,6 +469,14 @@ def _bbox(layers):
     return min(xs), min(ys), max(xs), max(ys)
 
 
+_CANVAS = []   # (W, H) while finishing a scene
+
+
+def _off(p, m=6):
+    W, H = _CANVAS
+    return p[0] < -m or p[0] > W + m or p[1] < -m or p[1] > H + m
+
+
 def _resample(pts, closed, step):
     """Points every `step` along the outline, keeping sharp corners."""
     P = list(pts)
@@ -504,6 +512,9 @@ def _resample(pts, closed, step):
     segs = list(zip(corners, corners[1:] + ([corners[0] + n] if closed else [])))
     for i0, i1 in segs:
         chain = [P[k % n] for k in range(i0, i1 + 1)]
+        if _CANVAS and all(_off(p) for p in chain + [((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) for a, b in zip(chain, chain[1:])]):
+            out.append((chain[0], True))     # off the canvas: no need for a torn edge
+            continue
         L = [0.0]
         for a, b in zip(chain, chain[1:]):
             L.append(L[-1] + math.dist(a, b))
@@ -671,7 +682,7 @@ class Picture:
 
 
 def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.5, wl=15.0,
-           grain_density=110, grain_cap=110, specks=True):
+           grain_density=110, grain_cap=110, specks=True, grain_min=220):
     """Fit the layers into the box (unless `fixed` = (scale, x, y): drawing point (x, y) goes to the
     box centre), tear the edges, add shadows and grain, return the SVG text."""
     W, H = box
@@ -685,6 +696,7 @@ def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.
     else:
         s, cx, cy = 1.0, W / 2, H / 2
         lift = 0
+        _CANVAS[:] = [W, H]
     M = (s, 0, 0, s, W / 2 - cx * s, H / 2 - cy * s - lift)
     seed = int(hashlib.md5(name.encode()).hexdigest()[:8], 16)
     rng = random.Random(seed)
@@ -725,12 +737,13 @@ def finish(name, box=(200, 200), fit=170, fixed=None, lift=1.5, step=3.0, amp=1.
             body.append(f'<path d="{d}" {paint}/>')
         if specks and L["kind"] == "fill" and L["grain"]:
             area = sum(_area(t) for t in torn)
-            if area > 220:
+            if area > grain_min:
                 ld, dd = _grain(torn, rng, grain_density, grain_cap)
                 if ld:
                     body.append(f'<path d="{ld}" fill="none" stroke="#FFFFFF" stroke-opacity=".2" stroke-width=".9" stroke-linecap="round"/>')
                 if dd:
                     body.append(f'<path d="{dd}" fill="none" stroke="#5A4630" stroke-opacity=".07" stroke-width=".9" stroke-linecap="round"/>')
+    _CANVAS.clear()
     if uses > 790:
         raise SystemExit(f"{name}: {uses} <use> (flutter_svg allows fewer)")
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">'

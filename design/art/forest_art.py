@@ -1017,7 +1017,7 @@ def scene_woods():
 def scene_job(fn):
     def f():
         fn()
-        return lambda name: finish(name, box=(SW, SH), fit=0, step=4.0, amp=2.0, wl=26.0, grain_density=320, grain_cap=150)
+        return lambda name: finish(name, box=(SW, SH), fit=0, step=4.0, amp=2.0, wl=26.0, grain_density=320, grain_cap=120, grain_min=9000)
     return f
 
 
