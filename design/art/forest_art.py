@@ -495,9 +495,9 @@ def pinecone(cx=0, cy=0, s=1.0, a=0, needles=True, big=1.0):
         paper(rr(-4, -60, 8, 14, 3), "#6E4A2C")
         paper(blob([(0, -50), (26, -42), (34, -14), (28, 22), (14, 48), (0, 56), (-14, 48), (-28, 22), (-34, -14), (-26, -42)]), "#5E3A22")
         rows = []
-        nr = round(9 / big)
-        for r in range(nr):
-            y = -42 + r * 92 / nr
+        gap = 11.5 * big
+        for r in range(int(92 / gap) + 1):
+            y = -42 + r * gap
             u = (y + 6) / 56
             hw = 33 * math.sqrt(max(0.0, 1 - u * u)) * (1.0 if y < -6 else 1 - .25 * u) + 4
             n = max(2, round(2 * hw / (15 * big)))

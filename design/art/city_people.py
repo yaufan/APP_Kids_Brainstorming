@@ -610,3 +610,31 @@ OWNERS = {
     "rabbit": lambda: owner_picture(rabbit, s=.9, foot=86, shadow=(52, 8)),
     "cat": lambda: owner_picture(cat, s=.9, foot=88, shadow=(56, 8)),
 }
+
+
+# ================================================================ THINGS (marker for the things section)
+THINGS = {}
+
+
+# ================================================================ writing and checking
+def build(only=None):
+    """Write the pictures (all, or the names in `only`); returns {name: KB}."""
+    out = {}
+    for name, fn in OWNERS.items():
+        if only and name not in only:
+            continue
+        begin(ol=OL_PEOPLE)
+        out[name] = save(name, fn())
+    for name, fn in THINGS.items():
+        if only and name not in only:
+            continue
+        begin(ol=OL_THING)
+        out[name] = save(name, fn())
+    if not only or "scene_street" in only:
+        begin(ol=OL_SCENE)
+        out["scene_street"] = save("scene_street", scene_street(), K.SCENE_W, K.SCENE_H)
+    return out
+
+
+def scene_street():
+    return ""
