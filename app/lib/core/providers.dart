@@ -44,3 +44,6 @@ class SessionStart extends Notifier<DateTime> {
 
   void restart() => state = ref.read(clockProvider)();
 }
+
+/// Things said only once per app start (the welcome on the map).
+final onceProvider = Provider<Set<String>>((ref) => <String>{});

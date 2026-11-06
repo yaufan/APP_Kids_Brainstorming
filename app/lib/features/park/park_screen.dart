@@ -57,8 +57,6 @@ class ParkScreen extends ConsumerStatefulWidget {
 }
 
 class _ParkScreenState extends ConsumerState<ParkScreen> with SingleTickerProviderStateMixin {
-  static var _welcomed = false;
-
   late final Sounds _sounds;
   late final _poof = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
   Land? _going;
@@ -69,10 +67,7 @@ class _ParkScreenState extends ConsumerState<ParkScreen> with SingleTickerProvid
     super.initState();
     _sounds = ref.read(soundsProvider);
     _sounds.hold(this, Music.park);
-    if (!_welcomed) {
-      _welcomed = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _say(Strings.welcome));
-    }
+    if (ref.read(onceProvider).add('welcome')) WidgetsBinding.instance.addPostFrameCallback((_) => _say(Strings.welcome));
   }
 
   @override
