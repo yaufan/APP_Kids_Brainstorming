@@ -6,8 +6,12 @@
 - 和「[畫畫小鎮](https://github.com/yaufan/APP_Kids_Paint)」「[字母寵物](https://github.com/yaufan/APP_Kids_Paint_for_learning_writing)」「[動物小餐廳](https://github.com/yaufan/APP_Kids_Cook)」「[小卡認天下](https://github.com/yaufan/APP_Kids_Card_Game)」是兄弟 APP：同一個作者、同一套技術、不同畫風。
 - 不連網、不定位、沒有廣告、沒有帳號。
 
+## 下載（Android）
+- 最新版：[Releases](https://github.com/yaufan/APP_Kids_Brainstorming/releases/latest)，一般手機下載 `think-park-版本-arm64.apk`。
+- 用手機掃描 [docs/download-qr.png](docs/download-qr.png)。
+
 ## 目前進度
-- 0.1 做好了，還沒發布：三個園區（三種卡通畫風）、六個遊戲、三個難度、偵探手冊、休息時間、家長模式、音樂和音效、APP 圖示。版本紀錄在 [CHANGELOG.md](CHANGELOG.md)。
+- 0.1.0（測試版，2026-11-06）：三個園區（三種卡通畫風）、六個遊戲、三個難度、偵探手冊、休息時間、家長模式、音樂和音效、APP 圖示。版本紀錄在 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 程式和素材在哪裡
 - `app/`：Flutter 程式。`lib/core/` 是題目、出題規則、存檔、聲音、語音；`lib/features/` 是樂園地圖、六個遊戲（`play/`）、偵探手冊、休息、家長模式。
